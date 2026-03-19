@@ -409,7 +409,6 @@ function renderWeather() {
     if (!info || !info.tomorrow) continue;
     const t = info.tomorrow;
     document.getElementById(info.tomorrowElemId).innerHTML =
-      `<span class="tomorrow-label">明日</span>` +
       `<span class="weather-location" style="color:${info.labelColor};opacity:0.45">${info.label}</span>` +
       `<span>${t.icon}</span>` +
       `<span>${escHtml(t.weatherDesc)}</span>` +
