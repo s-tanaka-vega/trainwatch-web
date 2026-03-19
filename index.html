@@ -93,9 +93,8 @@
       flex-shrink: 0;
     }
     .weather-row-sm {
-      font-size: 0.9rem;
-      font-weight: 500;
-      opacity: 0.85;
+      font-size: 1.05rem;
+      font-weight: 600;
     }
     .tomorrow-label {
       display: inline-block;
@@ -411,7 +410,7 @@ function renderWeather() {
     const t = info.tomorrow;
     document.getElementById(info.tomorrowElemId).innerHTML =
       `<span class="tomorrow-label">明日</span>` +
-      `<span class="weather-location" style="color:${info.labelColor}">${info.label}</span>` +
+      `<span class="weather-location" style="color:${info.labelColor};opacity:0.45">${info.label}</span>` +
       `<span>${t.icon}</span>` +
       `<span>${escHtml(t.weatherDesc)}</span>` +
       `<span style="color:${tempColor(t.tempMax, t.code)}">${t.tempMax}°</span>` +
