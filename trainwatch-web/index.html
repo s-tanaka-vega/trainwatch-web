@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>TrainWatcher</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #121212;
+      color: #e0e0e0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    /* ナビバー */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px 6px;
+      border-bottom: 1px solid #2a2a2a;
+    }
+    .navbar-title {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    #refresh-btn {
+      background: none;
+      border: none;
+      color: #e0e0e0;
+      font-size: 1.3rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      line-height: 1;
+    }
+    #refresh-btn:disabled { opacity: 0.4; cursor: default; }
+
+    /* 時刻 */
+    #clock {
+      font-family: 'SF Mono', 'Consolas', 'Courier New', monospace;
+      font-size: clamp(2.8rem, 16vw, 4.5rem);
+      font-weight: bold;
+      padding: 10px 16px 2px;
+      letter-spacing: 0.02em;
+    }
+
+    /* 紫ライン */
+    .divider-purple {
+      height: 3px;
+      background: #AB47BC;
+      border-radius: 2px;
+      margin: 10px 24px 10px;
+    }
+
+    /* ステータス + 天気バー */
+    #status-bar {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 4px 16px 8px;
+    }
+    #fetch-status {
+      font-size: 0.72rem;
+      color: #26C6DA;
+      padding-top: 4px;
+      white-space: nowrap;
+      min-width: 28px;
+    }
+    #weather-panel { flex: 1; }
+    #umbrella-row {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: none;
+    }
+    .weather-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 2px;
+      flex-wrap: wrap;
+    }
+    .weather-location {
+      display: inline-block;
+      width: 56px;
+      flex-shrink: 0;
+    }
+
+    /* カード一覧 */
+    #cards {
+      padding: 0 16px 24px;
+    }
+    .card {
+      background: #1e1e1e;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .line-name {
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    .rank-badge {
+      font-size: 1.05rem;
+      font-weight: bold;
+    }
+    .card-desc {
+      font-size: 0.9rem;
+      color: #9e9e9e;
+      margin-bottom: 4px;
+    }
+    .scores {
+      font-size: 0.72rem;
+      color: #666;
+      margin-bottom: 4px;
+    }
+    .divider-thin {
+      border-top: 1px solid #2d2d2d;
+      margin: 6px 0;
+    }
+    .headlines {
+      font-size: 0.72rem;
+      color: #9e9e9e;
+      white-space: pre-wrap;
+      line-height: 1.5;
+      word-break: break-all;
+    }
+
+    /* スピナー */
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #444;
+      border-top-color: #e0e0e0;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* スケルトン（読み込み中プレースホルダー） */
+    .skeleton {
+      background: #2a2a2a;
+      border-radius: 4px;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50%      { opacity: 0.4; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="navbar">
+  <span class="navbar-title">TrainWatcher</span>
+  <button id="refresh-btn" onclick="manualRefresh()">↺</button>
+</div>
+
+<div id="clock">--:--:--</div>
+<div class="divider-purple"></div>
+
+<div id="status-bar">
+  <span id="fetch-status">未取得</span>
+  <div id="weather-panel">
+    <div id="umbrella-row"></div>
+    <div id="hadano-row" class="weather-row"></div>
+    <div id="minamimachida-row" class="weather-row"></div>
+  </div>
+</div>
+
+<div id="cards">
+  <!-- スケルトンカード（初期表示） -->
+  <div class="card" style="opacity:0.5">
+    <div class="skeleton" style="height:18px;width:60%;margin-bottom:8px"></div>
+    <div class="skeleton" style="height:14px;width:40%"></div>
+  </div>
+  <div class="card" style="opacity:0.5">
+    <div class="skeleton" style="height:18px;width:55%;margin-bottom:8px"></div>
+    <div class="skeleton" style="height:14px;width:35%"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 設定
+// ============================================================
+const PROXY_BASE = 'https://api.allorigins.win/get?url=';
+
+const TRANSIT_URL    = 'https://transit.yahoo.co.jp/diainfo/area/4';
+const REALTIME_BASE  = 'https://search.yahoo.co.jp/realtime/search';
+
+const TARGET_LINES = [
+  '広域', '東急田園都市線', '小田急江ノ島線',
+  '小田急小田原線', 'ＪＲ横浜線', '相鉄本線'
+];
+
+const LINE_KEYWORDS = {
+  '東急田園都市線': ['渋谷','三軒茶屋','二子玉川','溝の口','あざみ野','青葉台','長津田','中央林間','田園都市線'],
+  '小田急江ノ島線': ['相模大野','中央林間','大和','藤沢','片瀬江ノ島','江ノ島線'],
+  '小田急小田原線': ['新宿','下北沢','登戸','新百合ヶ丘','町田','海老名','本厚木','秦野','小田原','小田原線'],
+  'ＪＲ横浜線':    ['東神奈川','菊名','新横浜','中山','長津田','町田','橋本','八王子','横浜線'],
+  '相鉄本線':      ['横浜','西谷','二俣川','大和','海老名','瀬谷','希望ヶ丘','三ツ境','相鉄'],
+};
+
+const TARGET_LINE_KEYMAP = {
+  '東急田園都市線': ['東急田園都市'],
+  '小田急小田原線': ['小田急小田原'],
+  '小田急江ノ島線': ['小田急江ノ島', '江ノ島線'],
+  'ＪＲ横浜線':    ['横浜線', 'ＪＲ横浜'],
+  '相鉄本線':      ['相鉄本線', '相鉄本'],
+};
+
+const LOCATIONS = [
+  { name: 'hadano',        label: '秦野',  lat: 35.3833, lon: 139.2167, color: '#FF8C00', elemId: 'hadano-row' },
+  { name: 'minamiMachida', label: '南町田', lat: 35.5419, lon: 139.4651, color: '#CE93D8', elemId: 'minamimachida-row' },
+];
+
+// ============================================================
+// ユーティリティ
+// ============================================================
+function escHtml(str) {
+  return str
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function nodeText(el) {
+  return (el ? (el.textContent || el.innerText || '') : '')
+    .replace(/\s+/g,' ').trim();
+}
+
+async function fetchViaProxy(url) {
+  const res  = await fetch(PROXY_BASE + encodeURIComponent(url), { cache: 'no-store' });
+  const json = await res.json();
+  return json.contents || '';
+}
+
+// ============================================================
+// 天気
+// ============================================================
+function wmoIcon(c) {
+  if (c===0) return '☀️'; if (c===1) return '🌤';
+  if (c===2) return '⛅️'; if (c===3) return '☁️';
+  if (c===45||c===48) return '🌫';
+  if (c>=51&&c<=55)   return '🌦';
+  if (c>=61&&c<=65)   return '🌧';
+  if (c>=71&&c<=77)   return '🌨';
+  if (c>=80&&c<=82)   return '🌧';
+  if (c>=95&&c<=99)   return '⛈';
+  return '🌡';
+}
+function wmoDesc(c) {
+  if (c===0) return '快晴'; if (c===1) return '晴れ';
+  if (c===2) return '晴れ/くもり'; if (c===3) return 'くもり';
+  if (c===45||c===48) return '霧';
+  if (c>=51&&c<=55)   return '霧雨';
+  if (c>=61&&c<=65)   return '雨';
+  if (c>=71&&c<=77)   return '雪';
+  if (c>=80&&c<=82)   return 'にわか雨';
+  if (c>=95&&c<=99)   return '雷雨';
+  return '';
+}
+function isRainy(c) {
+  return (c>=51&&c<=65)||(c>=80&&c<=82)||(c>=95&&c<=99);
+}
+function tempColor(t, c) {
+  if (isRainy(c))  return '#4FC3F7';
+  if (t>=28)       return '#FF5722';
+  if (t>=22)       return '#FF8A65';
+  if (t>=16)       return '#FFD54F';
+  if (t>=10)       return '#A5D6A7';
+  if (t>=4)        return '#90CAF9';
+  return '#42A5F5';
+}
+function precipColor(p) {
+  if (p>=70) return '#4FC3F7';
+  if (p>=40) return '#90CAF9';
+  return '#e0e0e0';
+}
+function umbrellaAlert(info) {
+  const heavy = [61,62,63,64,65,80,81,82,95,96,99].includes(info.code);
+  const p = info.precipProb;
+  if (heavy || p>=70) return { text:'☂️ 傘必須！', color:'#FF1744', bold:true };
+  if (p>=50)          return { text:'☂️ 傘○',    color:'#FF6D01', bold:true };
+  if (p>=30)          return { text:'☂️ 傘▲',    color:'#FBBC04', bold:false };
+  return null;
+}
+
+const weatherCache = {};
+
+async function fetchWeather() {
+  for (const loc of LOCATIONS) {
+    try {
+      const url =
+        `https://api.open-meteo.com/v1/forecast` +
+        `?latitude=${loc.lat}&longitude=${loc.lon}` +
+        `&current=temperature_2m,weather_code,precipitation_probability&timezone=Asia%2FTokyo`;
+      const res  = await fetch(url);
+      const json = await res.json();
+      const cur  = json.current;
+      weatherCache[loc.name] = {
+        icon:        wmoIcon(cur.weather_code),
+        temp:        Math.round(cur.temperature_2m),
+        tempValue:   cur.temperature_2m,
+        precipProb:  cur.precipitation_probability ?? 0,
+        weatherDesc: wmoDesc(cur.weather_code),
+        code:        cur.weather_code,
+        label:       loc.label,
+        labelColor:  loc.color,
+        elemId:      loc.elemId,
+      };
+    } catch(e) { console.warn('weather', loc.name, e); }
+  }
+  renderWeather();
+}
+
+function renderWeather() {
+  const h = weatherCache.hadano;
+  const m = weatherCache.minamiMachida;
+
+  // 傘アラート
+  const ha = h ? umbrellaAlert(h) : null;
+  const ma = m ? umbrellaAlert(m) : null;
+  const umbRow = document.getElementById('umbrella-row');
+  if (ha || ma) {
+    let parts = [];
+    if (ha) parts.push(`<span style="color:${ha.color};font-weight:${ha.bold?700:400}">${ha.text}</span>`);
+    if (ha && ma) parts.push('<span style="color:#555"> / </span>');
+    if (ma) parts.push(`<span style="color:${ma.color};font-weight:${ma.bold?700:400}">${ma.text}</span>`);
+    umbRow.innerHTML = parts.join('');
+    umbRow.style.display = '';
+  } else {
+    umbRow.innerHTML = '';
+    umbRow.style.display = 'none';
+  }
+
+  // 各地点
+  for (const info of [h, m]) {
+    if (!info) continue;
+    document.getElementById(info.elemId).innerHTML =
+      `<span class="weather-location" style="color:${info.labelColor}">${info.label}</span>` +
+      `<span>${info.icon}</span>` +
+      `<span>${escHtml(info.weatherDesc)}</span>` +
+      `<span style="color:${tempColor(info.tempValue, info.code)}">${info.temp}°C</span>` +
+      `<span style="color:${precipColor(info.precipProb)}">${info.precipProb}%</span>`;
+  }
+}
+
+// ============================================================
+// スクレーパー
+// ============================================================
+async function fetchOfficialStatus() {
+  try {
+    const html   = await fetchViaProxy(TRANSIT_URL);
+    const parser = new DOMParser();
+    const doc    = parser.parseFromString(html, 'text/html');
+    const result = {};
+    doc.querySelectorAll('dl').forEach(dl => {
+      if (!dl.innerHTML.includes('colTrouble')) return;
+      const dt = dl.querySelector('dt');
+      const dd = dl.querySelector('[class*="colTrouble"]');
+      if (!dt || !dd) return;
+      const dtText = nodeText(dt);
+      const ddText = nodeText(dd);
+      if (!dtText || !ddText || dtText.includes('現在運行情報')) return;
+      result[dtText] = ddText;
+    });
+    return result;
+  } catch(e) {
+    console.warn('official status', e);
+    return {};
+  }
+}
+
+async function fetchRealtimeData(lineName) {
+  const delayKws = '遅延 OR 止ま OR 見合 OR 遅れ OR 遅い';
+  const crowdKws = '混雑 OR 混み OR 混ん OR 人多 OR 満員';
+  const kws      = LINE_KEYWORDS[lineName] || [lineName];
+  const query    = `(${kws.join(' OR ')}) (${delayKws} OR ${crowdKws})`;
+  const url      = `${REALTIME_BASE}?p=${encodeURIComponent(query)}&rank=recent`;
+
+  try {
+    const html   = await fetchViaProxy(url);
+    const parser = new DOMParser();
+    const doc    = parser.parseFromString(html, 'text/html');
+
+    const headlines = [];
+    const seen      = new Set();
+    doc.querySelectorAll('article').forEach(art => {
+      const text = (art.textContent || '').replace(/\s+/g,' ').trim();
+      if (text.length < 15) return;
+      if (text.includes('Yahoo')||text.includes('IDで')||text.includes('利用規約')) return;
+      if (seen.has(text)) return;
+      headlines.push(text);
+      seen.add(text);
+    });
+
+    const countOf = (str, sub) => str.split(sub).length - 1;
+    const dScore  = ['遅延','止ま','見合','遅れ'].reduce((s,w)=>s+countOf(html,w), 0);
+    const cScore  = ['混雑','混み','人多','入場規制'].reduce((s,w)=>s+countOf(html,w), 0);
+
+    return { delayScore: dScore, crowdScore: cScore, headlines: headlines.slice(0, 3) };
+  } catch(e) {
+    console.warn('realtime', lineName, e);
+    return { delayScore: 0, crowdScore: 0, headlines: [] };
+  }
+}
+
+// ============================================================
+// ランク算出
+// ============================================================
+function calculateRank(delayScore, crowdScore, statusText) {
+  if (statusText.includes('情報取得失敗'))
+    return { rank:'-', color:'#5f6368', desc:'失敗' };
+
+  const isNormal = statusText.includes('平常運転');
+  if (!isNormal) {
+    if (['見合わせ','運休','中断','脱線','不通'].some(w=>statusText.includes(w)))
+      return { rank:'E', color:'#B21111', desc:'不通' };
+    if (['大幅','影響','停止'].some(w=>statusText.includes(w)))
+      return { rank:'D', color:'#FF6D01', desc:'大遅' };
+    return { rank:'C', color:'#EA4335', desc:'遅延' };
+  }
+  if (delayScore >= 50) return { rank:'B',  color:'#FBBC04', desc:'予兆' };
+  if (delayScore >= 20 || crowdScore >= 15) {
+    const desc = crowdScore > delayScore/2 ? '混雑' : '微遅';
+    return { rank:'A-', color:'#A8D18D', desc };
+  }
+  return { rank:'A', color:'#34A853', desc:'平常' };
+}
+
+function scoreDelayColor(s) {
+  if (s>=50) return '#EA4335'; if (s>=20) return '#FF6D01';
+  if (s>=10) return '#FBBC04'; if (s>=5)  return '#FFF176';
+  return '#555';
+}
+function scoreCrowdColor(s) {
+  if (s>=15) return '#FF6D01'; if (s>=8) return '#FBBC04';
+  if (s>=3)  return '#FFF176';
+  return '#555';
+}
+
+// ============================================================
+// メイン更新
+// ============================================================
+let isLoading = false;
+
+function officialStatusForLine(lineName, official) {
+  if (official[lineName]) return official[lineName];
+  const kws = TARGET_LINE_KEYMAP[lineName];
+  if (kws) {
+    for (const [yahooName, status] of Object.entries(official)) {
+      if (kws.some(k => yahooName.includes(k))) return status;
+    }
+  }
+  return '平常運転';
+}
+
+async function refresh() {
+  if (isLoading) return;
+  isLoading = true;
+  setFetchStatus('更新中', '#FBBC04');
+  setRefreshLoading(true);
+
+  const official = await fetchOfficialStatus();
+
+  // 広域情報
+  const skipKws    = ['東急田園都市','小田急','横浜線','相鉄'];
+  const otherLines = Object.entries(official)
+    .filter(([n]) => !skipKws.some(k => n.includes(k)))
+    .sort(([a],[b]) => a.localeCompare(b))
+    .map(([n,s]) => `【${n}】${s}`);
+  const count    = otherLines.length;
+  let wideRows   = [];
+  for (let i=0; i<otherLines.length; i+=2)
+    wideRows.push(otherLines.slice(i,i+2).join('  '));
+  if (!wideRows.length) wideRows = ['現在、関東他路線に目立った遅延はありません'];
+
+  const items = [];
+  for (const line of TARGET_LINES) {
+    if (line === '広域') {
+      let wRank, wColor;
+      if      (count === 0)  { wRank='-';  wColor='#34A853'; }
+      else if (count <= 3)   { wRank='!';  wColor='#FBBC04'; }
+      else if (count <= 8)   { wRank='!';  wColor='#FF6D01'; }
+      else if (count <= 15)  { wRank='!!'; wColor='#EA4335'; }
+      else                   { wRank='!!'; wColor='#9C27B0'; }
+      const wDesc = count > 0 ? `関東 遅延${count}路線` : '関東他路線 平常';
+      items.push({ line, rank:wRank, rankColor:wColor, desc:wDesc,
+                   delayScore:0, crowdScore:0, headlines:wideRows, isWide:true });
+    } else {
+      const rt      = await fetchRealtimeData(line);
+      const stFull  = officialStatusForLine(line, official);
+      const ri      = calculateRank(rt.delayScore, rt.crowdScore, stFull);
+      items.push({ line, rank:ri.rank, rankColor:ri.color, desc:ri.desc,
+                   delayScore:rt.delayScore, crowdScore:rt.crowdScore,
+                   headlines:rt.headlines.slice(0,2), isWide:false });
+    }
+  }
+
+  renderCards(items);
+  setFetchStatus(items.length === 0 ? 'NG' : 'OK', '#26C6DA');
+  isLoading = false;
+  setRefreshLoading(false);
+}
+
+function renderCards(items) {
+  const container = document.getElementById('cards');
+  container.innerHTML = '';
+  for (const st of items) {
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const descStyle = st.isWide
+      ? `color:${st.rankColor};font-weight:${st.rank!=='-'?600:400}`
+      : '';
+
+    let html =
+      `<div class="card-header">` +
+      `<span class="line-name">${escHtml(st.line)}</span>` +
+      `<span class="rank-badge" style="color:${st.rankColor}">${escHtml(st.rank)}</span>` +
+      `</div>` +
+      `<div class="card-desc" style="${descStyle}">${escHtml(st.desc)}</div>`;
+
+    if (!st.isWide) {
+      html +=
+        `<div class="scores">` +
+        `<span style="color:#555">遅:</span>` +
+        `<span style="color:${scoreDelayColor(st.delayScore)};font-weight:${st.delayScore>=20?600:400}">` +
+          `${st.delayScore}</span>` +
+        `<span style="color:#555">　混:</span>` +
+        `<span style="color:${scoreCrowdColor(st.crowdScore)};font-weight:${st.crowdScore>=15?600:400}">` +
+          `${st.crowdScore}</span>` +
+        `</div>`;
+    }
+
+    if (st.headlines.length > 0) {
+      const hl = st.isWide
+        ? `<span style="color:${st.rankColor}">${escHtml(st.headlines.join('\n'))}</span>`
+        : escHtml(st.headlines.join('\n'));
+      html += `<div class="divider-thin"></div><div class="headlines">${hl}</div>`;
+    }
+
+    card.innerHTML = html;
+    container.appendChild(card);
+  }
+}
+
+function setFetchStatus(text, color) {
+  const el = document.getElementById('fetch-status');
+  el.textContent = text;
+  el.style.color  = color || '#26C6DA';
+}
+function setRefreshLoading(on) {
+  const btn = document.getElementById('refresh-btn');
+  btn.innerHTML = on ? '<span class="spinner"></span>' : '↺';
+  btn.disabled  = on;
+}
+
+function manualRefresh() {
+  fetchWeather();
+  refresh();
+}
+
+// ============================================================
+// 時刻
+// ============================================================
+function updateClock() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('clock').textContent =
+    `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+}
+
+// ============================================================
+// 起動
+// ============================================================
+updateClock();
+setInterval(updateClock, 1000);
+
+fetchWeather();
+refresh();
+
+setInterval(fetchWeather, 5 * 60 * 1000);
+setInterval(refresh,      5 * 60 * 1000);
+</script>
+</body>
+</html>
