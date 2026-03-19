@@ -220,7 +220,7 @@
 // ============================================================
 // 設定
 // ============================================================
-const PROXY_BASE = 'https://api.allorigins.win/get?url=';
+const PROXY_BASE = 'https://corsproxy.io/?url=';
 
 const TRANSIT_URL    = 'https://transit.yahoo.co.jp/diainfo/area/4';
 const REALTIME_BASE  = 'https://search.yahoo.co.jp/realtime/search';
@@ -266,9 +266,8 @@ function nodeText(el) {
 }
 
 async function fetchViaProxy(url) {
-  const res  = await fetch(PROXY_BASE + encodeURIComponent(url), { cache: 'no-store' });
-  const json = await res.json();
-  return json.contents || '';
+  const res = await fetch(PROXY_BASE + encodeURIComponent(url), { cache: 'no-store' });
+  return await res.text();
 }
 
 // ============================================================
@@ -384,7 +383,9 @@ function renderWeather() {
   const m = weatherCache.minamiMachida;
 
   // 傘アラート：今日・明日を個別判定して / で表示、高い方優先
+  console.log('umbrella debug', h?.precipProb, m?.precipProb, h?.code, m?.code);
   const todayLevel    = Math.max(umbrellaLevel(h), umbrellaLevel(m));
+  console.log('todayLevel', todayLevel);
   const tomorrowLevel = Math.max(
     h?.tomorrow ? umbrellaLevel(h.tomorrow) : 0,
     m?.tomorrow ? umbrellaLevel(m.tomorrow) : 0
