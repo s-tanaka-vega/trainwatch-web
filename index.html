@@ -312,14 +312,6 @@ function precipColor(p) {
   if (p>=40) return '#90CAF9';
   return '#e0e0e0';
 }
-function umbrellaAlert(info) {
-  const heavy = [61,62,63,64,65,80,81,82,95,96,99].includes(info.code);
-  const p = info.precipProb;
-  if (heavy || p>=70) return { text:'☂️ 傘必須！', color:'#FF1744', bold:true };
-  if (p>=50)          return { text:'☂️ 傘かも',  color:'#FF6D01', bold:true };
-  if (p>=30)          return { text:'☂️ 傘▲',    color:'#FBBC04', bold:false };
-  return null;
-}
 
 const weatherCache = {};
 
@@ -365,16 +357,18 @@ function umbrellaLevel(info) {
   if (!info) return 0;
   const heavy = [61,62,63,64,65,80,81,82,95,96,99].includes(info.code);
   const p = info.precipProb;
-  if (heavy || p >= 70) return 3;
-  if (p >= 50) return 2;
-  if (p >= 30) return 1;
+  if (heavy || p >= 70) return 4;
+  if (p >= 50) return 3;
+  if (p >= 30) return 2;
+  if (p >= 20) return 1;
   return 0;
 }
 
 function levelToAlert(level) {
-  if (level === 3) return { text:'☂️ 傘必須！', color:'#FF1744', bold:true };
-  if (level === 2) return { text:'☂️ 傘かも',  color:'#FF6D01', bold:true };
-  if (level === 1) return { text:'☂️ 傘▲',    color:'#FBBC04', bold:false };
+  if (level === 4) return { text:'☂️☂️ 傘必須！！', color:'#FF1744', bold:true };
+  if (level === 3) return { text:'☂️ 傘推奨！',   color:'#FF6D01', bold:true };
+  if (level === 2) return { text:'🌂 傘かも',     color:'#FBBC04', bold:true };
+  if (level === 1) return { text:'☁️ 予備',       color:'#90CAF9', bold:false };
   return null;
 }
 
