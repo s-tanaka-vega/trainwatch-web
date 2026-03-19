@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>TrainWatcher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@900&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -40,11 +42,11 @@
 
     /* 時刻 */
     #clock {
-      font-family: 'SF Mono', 'Consolas', 'Courier New', monospace;
+      font-family: 'Nunito', 'Arial Rounded MT Bold', 'Hiragino Maru Gothic ProN', sans-serif;
       font-size: clamp(2.8rem, 16vw, 4.5rem);
-      font-weight: bold;
+      font-weight: 900;
       padding: 10px 16px 2px;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.04em;
     }
 
     /* 紫ライン */
@@ -89,6 +91,23 @@
       display: inline-block;
       width: 56px;
       flex-shrink: 0;
+    }
+    .weather-row-sm {
+      font-size: 0.9rem;
+      font-weight: 500;
+      opacity: 0.85;
+    }
+    .tomorrow-label {
+      display: inline-block;
+      width: 28px;
+      font-size: 0.72rem;
+      color: #666;
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+    .weather-divider-thin {
+      border-top: 1px dashed #2a2a2a;
+      margin: 4px 0;
     }
 
     /* カード一覧 */
@@ -178,6 +197,11 @@
     <div id="umbrella-row"></div>
     <div id="hadano-row" class="weather-row"></div>
     <div id="minamimachida-row" class="weather-row"></div>
+    <div id="tomorrow-section" style="display:none">
+      <div class="weather-divider-thin"></div>
+      <div id="hadano-tomorrow-row" class="weather-row weather-row-sm"></div>
+      <div id="minamimachida-tomorrow-row" class="weather-row weather-row-sm"></div>
+    </div>
   </div>
 </div>
 
@@ -307,10 +331,13 @@ async function fetchWeather() {
       const url =
         `https://api.open-meteo.com/v1/forecast` +
         `?latitude=${loc.lat}&longitude=${loc.lon}` +
-        `&current=temperature_2m,weather_code,precipitation_probability&timezone=Asia%2FTokyo`;
-      const res  = await fetch(url);
-      const json = await res.json();
-      const cur  = json.current;
+        `&current=temperature_2m,weather_code,precipitation_probability` +
+        `&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max` +
+        `&timezone=Asia%2FTokyo`;
+      const res   = await fetch(url);
+      const json  = await res.json();
+      const cur   = json.current;
+      const daily = json.daily;
       weatherCache[loc.name] = {
         icon:        wmoIcon(cur.weather_code),
         temp:        Math.round(cur.temperature_2m),
@@ -321,33 +348,51 @@ async function fetchWeather() {
         label:       loc.label,
         labelColor:  loc.color,
         elemId:      loc.elemId,
+        tomorrowElemId: loc.elemId.replace('-row', '-tomorrow-row'),
+        tomorrow: {
+          icon:        wmoIcon(daily.weather_code[1]),
+          tempMax:     Math.round(daily.temperature_2m_max[1]),
+          tempMin:     Math.round(daily.temperature_2m_min[1]),
+          precipProb:  daily.precipitation_probability_max[1] ?? 0,
+          weatherDesc: wmoDesc(daily.weather_code[1]),
+          code:        daily.weather_code[1],
+        },
       };
     } catch(e) { console.warn('weather', loc.name, e); }
   }
   renderWeather();
 }
 
+function umbrellaLevel(info) {
+  if (!info) return 0;
+  const heavy = [61,62,63,64,65,80,81,82,95,96,99].includes(info.code);
+  const p = info.precipProb;
+  if (heavy || p >= 70) return 3;
+  if (p >= 50) return 2;
+  if (p >= 30) return 1;
+  return 0;
+}
+
 function renderWeather() {
   const h = weatherCache.hadano;
   const m = weatherCache.minamiMachida;
 
-  // 傘アラート
-  const ha = h ? umbrellaAlert(h) : null;
-  const ma = m ? umbrellaAlert(m) : null;
+  // 傘アラート：高い方だけ1行
+  const ha     = h ? umbrellaAlert(h) : null;
+  const ma     = m ? umbrellaAlert(m) : null;
+  const hLevel = umbrellaLevel(h);
+  const mLevel = umbrellaLevel(m);
+  const topAlert = (hLevel >= mLevel) ? ha : ma;
   const umbRow = document.getElementById('umbrella-row');
-  if (ha || ma) {
-    let parts = [];
-    if (ha) parts.push(`<span style="color:${ha.color};font-weight:${ha.bold?700:400}">${ha.text}</span>`);
-    if (ha && ma) parts.push('<span style="color:#555"> / </span>');
-    if (ma) parts.push(`<span style="color:${ma.color};font-weight:${ma.bold?700:400}">${ma.text}</span>`);
-    umbRow.innerHTML = parts.join('');
+  if (topAlert) {
+    umbRow.innerHTML = `<span style="color:${topAlert.color};font-weight:${topAlert.bold?700:400}">${topAlert.text}</span>`;
     umbRow.style.display = '';
   } else {
     umbRow.innerHTML = '';
     umbRow.style.display = 'none';
   }
 
-  // 各地点
+  // 今日 各地点
   for (const info of [h, m]) {
     if (!info) continue;
     document.getElementById(info.elemId).innerHTML =
@@ -356,6 +401,23 @@ function renderWeather() {
       `<span>${escHtml(info.weatherDesc)}</span>` +
       `<span style="color:${tempColor(info.tempValue, info.code)}">${info.temp}°C</span>` +
       `<span style="color:${precipColor(info.precipProb)}">${info.precipProb}%</span>`;
+  }
+
+  // 明日 各地点
+  const hasTomorrow = (h && h.tomorrow) || (m && m.tomorrow);
+  document.getElementById('tomorrow-section').style.display = hasTomorrow ? '' : 'none';
+  for (const info of [h, m]) {
+    if (!info || !info.tomorrow) continue;
+    const t = info.tomorrow;
+    document.getElementById(info.tomorrowElemId).innerHTML =
+      `<span class="tomorrow-label">明日</span>` +
+      `<span class="weather-location" style="color:${info.labelColor}">${info.label}</span>` +
+      `<span>${t.icon}</span>` +
+      `<span>${escHtml(t.weatherDesc)}</span>` +
+      `<span style="color:${tempColor(t.tempMax, t.code)}">${t.tempMax}°</span>` +
+      `<span style="color:#666">/</span>` +
+      `<span style="color:${tempColor(t.tempMin, t.code)}">${t.tempMin}°</span>` +
+      `<span style="color:${precipColor(t.precipProb)}">${t.precipProb}%</span>`;
   }
 }
 
