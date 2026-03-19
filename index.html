@@ -317,7 +317,7 @@ function umbrellaAlert(info) {
   const heavy = [61,62,63,64,65,80,81,82,95,96,99].includes(info.code);
   const p = info.precipProb;
   if (heavy || p>=70) return { text:'☂️ 傘必須！', color:'#FF1744', bold:true };
-  if (p>=50)          return { text:'☂️ 傘○',    color:'#FF6D01', bold:true };
+  if (p>=50)          return { text:'☂️ 傘かも',  color:'#FF6D01', bold:true };
   if (p>=30)          return { text:'☂️ 傘▲',    color:'#FBBC04', bold:false };
   return null;
 }
@@ -372,19 +372,37 @@ function umbrellaLevel(info) {
   return 0;
 }
 
+function levelToAlert(level) {
+  if (level === 3) return { text:'☂️ 傘必須！', color:'#FF1744', bold:true };
+  if (level === 2) return { text:'☂️ 傘かも',  color:'#FF6D01', bold:true };
+  if (level === 1) return { text:'☂️ 傘▲',    color:'#FBBC04', bold:false };
+  return null;
+}
+
 function renderWeather() {
   const h = weatherCache.hadano;
   const m = weatherCache.minamiMachida;
 
-  // 傘アラート：高い方だけ1行
-  const ha     = h ? umbrellaAlert(h) : null;
-  const ma     = m ? umbrellaAlert(m) : null;
-  const hLevel = umbrellaLevel(h);
-  const mLevel = umbrellaLevel(m);
-  const topAlert = (hLevel >= mLevel) ? ha : ma;
+  // 傘アラート：今日・明日を個別判定して / で表示、高い方優先
+  const todayLevel    = Math.max(umbrellaLevel(h), umbrellaLevel(m));
+  const tomorrowLevel = Math.max(
+    h?.tomorrow ? umbrellaLevel(h.tomorrow) : 0,
+    m?.tomorrow ? umbrellaLevel(m.tomorrow) : 0
+  );
+  const todayAlert    = levelToAlert(todayLevel);
+  const tomorrowAlert = levelToAlert(tomorrowLevel);
+
   const umbRow = document.getElementById('umbrella-row');
-  if (topAlert) {
-    umbRow.innerHTML = `<span style="color:${topAlert.color};font-weight:${topAlert.bold?700:400}">${topAlert.text}</span>`;
+  if (todayLevel > 0 || tomorrowLevel > 0) {
+    // 高い方を左側に（同じなら今日優先）
+    const [leftAlert, rightAlert] = todayLevel >= tomorrowLevel
+      ? [todayAlert, tomorrowAlert]
+      : [tomorrowAlert, todayAlert];
+    const alertSpan = a => a
+      ? `<span style="color:${a.color};font-weight:${a.bold?700:400}">${a.text}</span>`
+      : '';
+    const parts = [alertSpan(leftAlert), alertSpan(rightAlert)].filter(Boolean);
+    umbRow.innerHTML = parts.join('<span style="color:#888;margin:0 2px">/</span>');
     umbRow.style.display = '';
   } else {
     umbRow.innerHTML = '';
