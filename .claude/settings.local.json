@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find C:UsersShotaTanakaDocumentsworkOLDprojectTrainWatch -type f -name *.js -o -name *.ts -o -name *.vue)"
+    ]
+  }
+}

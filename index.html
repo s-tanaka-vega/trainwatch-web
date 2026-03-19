@@ -386,25 +386,13 @@ function renderWeather() {
   const tomorrowAlert = levelToAlert(tomorrowLevel);
 
   const umbRow = document.getElementById('umbrella-row');
-  if (todayLevel > 0 || tomorrowLevel > 0) {
-    // 常に今日 / 明日の順。片方0なら空文字（今日0なら頭に/、明日0なら末尾なし）
-    const alertSpan = a => a
-      ? `<span style="color:${a.color};font-weight:${a.bold?700:400}">${a.text}</span>`
-      : '';
-    const sep = '<span style="color:#888;margin:0 2px">/</span>';
-    if (todayLevel > 0 && tomorrowLevel > 0) {
-      umbRow.innerHTML = alertSpan(todayAlert) + sep + alertSpan(tomorrowAlert);
-    } else if (todayLevel > 0) {
-      umbRow.innerHTML = alertSpan(todayAlert);
-    } else {
-      // 明日だけ雨 → "/ ☂️ 傘かも" で今日は平気と伝える
-      umbRow.innerHTML = sep + alertSpan(tomorrowAlert);
-    }
-    umbRow.style.display = 'block';
-  } else {
-    umbRow.innerHTML = '';
-    umbRow.style.display = 'none';
-  }
+  // 常に今日 / 明日の枠を表示。傘なし日は薄い文字でプレースホルダー
+  const alertSpan = (a, level) => level > 0 && a
+    ? `<span style="color:${a.color};font-weight:${a.bold?700:400}">${a.text}</span>`
+    : `<span style="color:#555;opacity:0.35">ー</span>`;
+  const sep = '<span style="color:#888;margin:0 8px">/</span>';
+  umbRow.innerHTML = alertSpan(todayAlert, todayLevel) + sep + alertSpan(tomorrowAlert, tomorrowLevel);
+  umbRow.style.display = 'block';
 
   // 今日 各地点
   for (const info of [h, m]) {
