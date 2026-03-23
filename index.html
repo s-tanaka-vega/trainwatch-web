@@ -478,7 +478,7 @@ async function fetchOfficialStatus() {
       result[dtText] = ddText;
     });
 
-    // 新形式: table rows (路線 | 状況 | 詳細)
+    // 新形式: table rows (路線 | 状況 | 詳細) — 平常運転は除外
     doc.querySelectorAll('table tr').forEach(tr => {
       const cells = tr.querySelectorAll('td');
       if (cells.length < 2) return;
@@ -486,6 +486,7 @@ async function fetchOfficialStatus() {
       const status   = nodeText(cells[1]);
       if (!lineName || !status) return;
       if (lineName === '路線' || lineName.includes('現在運行')) return;
+      if (status === '平常運転') return;
       if (!result[lineName]) result[lineName] = status;
     });
 
