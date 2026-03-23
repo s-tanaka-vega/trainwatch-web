@@ -108,6 +108,19 @@
       border-top: 1px dashed #2a2a2a;
       margin: 4px 0;
     }
+    #weather-links {
+      margin-top: 6px;
+      font-size: 0.72rem;
+    }
+    #weather-links a {
+      color: #26C6DA;
+      text-decoration: none;
+    }
+    #weather-links a:hover { text-decoration: underline; }
+    .weather-link-sep {
+      color: #555;
+      margin: 0 6px;
+    }
 
     /* カード一覧 */
     #cards {
@@ -201,6 +214,11 @@
       <div id="hadano-tomorrow-row" class="weather-row weather-row-sm"></div>
       <div id="minamimachida-tomorrow-row" class="weather-row weather-row-sm"></div>
     </div>
+  </div>
+  <div id="weather-links">
+    <a href="https://tenki.jp/forecast/3/17/4620/14211/1hour.html" target="_blank">秦野天気</a>
+    <span class="weather-link-sep">/</span>
+    <a href="https://transit.yahoo.co.jp/traininfo/area/4/" target="_blank">関東広域電車情報</a>
   </div>
 </div>
 
@@ -312,6 +330,17 @@ function precipColor(p) {
   if (p>=40) return '#90CAF9';
   return '#e0e0e0';
 }
+function wmoDescColor(c) {
+  if (c===0||c===1||c===2) return '#FFD54F';  // 快晴・晴れ・晴れ/くもり
+  if (c===3)               return '#B0BEC5';  // くもり
+  if (c===45||c===48)      return '#9E9E9E';  // 霧
+  if (c>=51&&c<=55)        return '#81D4FA';  // 霧雨
+  if (c>=61&&c<=65)        return '#4FC3F7';  // 雨
+  if (c>=71&&c<=77)        return '#E1F5FE';  // 雪
+  if (c>=80&&c<=82)        return '#29B6F6';  // にわか雨
+  if (c>=95&&c<=99)        return '#FF7043';  // 雷雨
+  return '#e0e0e0';
+}
 
 const weatherCache = {};
 
@@ -400,7 +429,7 @@ function renderWeather() {
     document.getElementById(info.elemId).innerHTML =
       `<span class="weather-location" style="color:${info.labelColor}">${info.label}</span>` +
       `<span>${info.icon}</span>` +
-      `<span>${escHtml(info.weatherDesc)}</span>` +
+      `<span style="color:${wmoDescColor(info.code)}">${escHtml(info.weatherDesc)}</span>` +
       `<span style="color:${tempColor(info.tempValue, info.code)}">${info.temp}°C</span>` +
       `<span style="color:${precipColor(info.precipProb)}">${info.precipProb}%</span>`;
   }
@@ -414,7 +443,7 @@ function renderWeather() {
     document.getElementById(info.tomorrowElemId).innerHTML =
       `<span class="weather-location" style="color:${info.labelColor};opacity:0.45">${info.label}</span>` +
       `<span>${t.icon}</span>` +
-      `<span>${escHtml(t.weatherDesc)}</span>` +
+      `<span style="color:${wmoDescColor(t.code)}">${escHtml(t.weatherDesc)}</span>` +
       `<span style="color:${tempColor(t.tempMax, t.code)}">${t.tempMax}°</span>` +
       `<span style="color:#666">/</span>` +
       `<span style="color:${tempColor(t.tempMin, t.code)}">${t.tempMin}°</span>` +
