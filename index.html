@@ -29,11 +29,17 @@
       font-size: 1rem;
       font-weight: 600;
     }
+    #navbar-date {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #AB47BC;
+      margin-left: 10px;
+    }
     #battery {
       font-size: 1.15rem;
       font-weight: 700;
       color: #26C6DA;
-      margin-left: 10px;
+      margin-left: 8px;
     }
     #refresh-btn {
       background: none;
@@ -202,7 +208,7 @@
 <body>
 
 <div class="navbar">
-  <span class="navbar-title">TrainWatcher</span><span id="battery">--</span>
+  <span class="navbar-title">TrainWatcher</span><span id="navbar-date"></span><span id="battery">--</span>
   <button id="refresh-btn" onclick="manualRefresh()">↺</button>
 </div>
 
@@ -669,11 +675,14 @@ function manualRefresh() {
 // ============================================================
 // 時刻
 // ============================================================
+const DOW = ['日','月','火','水','木','金','土'];
 function updateClock() {
   const now = new Date();
   const pad = n => String(n).padStart(2,'0');
   document.getElementById('clock').textContent =
     `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  document.getElementById('navbar-date').textContent =
+    `${now.getMonth()+1}/${now.getDate()}(${DOW[now.getDay()]})`;
 }
 
 // ============================================================
