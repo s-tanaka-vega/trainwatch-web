@@ -465,6 +465,8 @@ async function fetchOfficialStatus() {
     const parser = new DOMParser();
     const doc    = parser.parseFromString(html, 'text/html');
     const result = {};
+
+    // 旧形式: dl/dt/dd with colTrouble class
     doc.querySelectorAll('dl').forEach(dl => {
       if (!dl.innerHTML.includes('colTrouble')) return;
       const dt = dl.querySelector('dt');
@@ -475,6 +477,18 @@ async function fetchOfficialStatus() {
       if (!dtText || !ddText || dtText.includes('現在運行情報')) return;
       result[dtText] = ddText;
     });
+
+    // 新形式: table rows (路線 | 状況 | 詳細)
+    doc.querySelectorAll('table tr').forEach(tr => {
+      const cells = tr.querySelectorAll('td');
+      if (cells.length < 2) return;
+      const lineName = nodeText(cells[0]);
+      const status   = nodeText(cells[1]);
+      if (!lineName || !status) return;
+      if (lineName === '路線' || lineName.includes('現在運行')) return;
+      if (!result[lineName]) result[lineName] = status;
+    });
+
     return result;
   } catch(e) {
     console.warn('official status', e);
