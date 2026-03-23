@@ -29,6 +29,12 @@
       font-size: 1rem;
       font-weight: 600;
     }
+    #battery {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #26C6DA;
+      margin-left: 10px;
+    }
     #refresh-btn {
       background: none;
       border: none;
@@ -196,7 +202,7 @@
 <body>
 
 <div class="navbar">
-  <span class="navbar-title">TrainWatcher</span>
+  <span class="navbar-title">TrainWatcher</span><span id="battery">--</span>
   <button id="refresh-btn" onclick="manualRefresh()">↺</button>
 </div>
 
@@ -675,6 +681,22 @@ function updateClock() {
 // ============================================================
 updateClock();
 setInterval(updateClock, 1000);
+
+// バッテリー
+(async () => {
+  const el = document.getElementById('battery');
+  try {
+    const bat = await navigator.getBattery();
+    const update = () => {
+      const pct = Math.round(bat.level * 100);
+      el.textContent = (bat.charging ? '⚡' : '') + pct + '%';
+      el.style.color = pct <= 20 ? '#FF5252' : pct <= 50 ? '#FFD54F' : '#26C6DA';
+    };
+    update();
+    bat.addEventListener('levelchange',   update);
+    bat.addEventListener('chargingchange', update);
+  } catch(e) { /* 取れない時は -- のまま */ }
+})();
 
 fetchWeather();
 refresh();
