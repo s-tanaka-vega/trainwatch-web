@@ -164,7 +164,7 @@
       margin-bottom: 4px;
     }
     .scores {
-      font-size: 0.72rem;
+      font-size: 0.85rem;
       color: #666;
       margin-bottom: 4px;
     }
@@ -173,11 +173,15 @@
       margin: 6px 0;
     }
     .headlines {
-      font-size: 0.72rem;
+      font-size: 0.9rem;
       color: #9e9e9e;
       white-space: pre-wrap;
-      line-height: 1.5;
+      line-height: 1.6;
       word-break: break-all;
+    }
+    .headlines-wide {
+      font-size: 1rem;
+      line-height: 1.8;
     }
 
     /* スピナー */
@@ -590,15 +594,22 @@ async function refresh() {
   const official = await fetchOfficialStatus();
 
   // 広域情報
-  const skipKws    = ['東急田園都市','小田急','横浜線','相鉄'];
-  const otherLines = Object.entries(official)
-    .filter(([n]) => !skipKws.some(k => n.includes(k)))
-    .sort(([a],[b]) => a.localeCompare(b))
-    .map(([n,s]) => `【${n}】${s}`);
-  const count    = otherLines.length;
-  let wideRows   = [];
-  for (let i=0; i<otherLines.length; i+=2)
-    wideRows.push(otherLines.slice(i,i+2).join('  '));
+  const skipKws     = ['横浜線','相鉄'];
+  const priorityKws = ['東急田園都市','小田急'];
+  const allEntries  = Object.entries(official)
+    .filter(([n]) => !skipKws.some(k => n.includes(k)));
+  const priorityLines = allEntries
+    .filter(([n])    =>  priorityKws.some(k => n.includes(k)))
+    .sort(([a],[b])  => a.localeCompare(b));
+  const middleLines   = allEntries
+    .filter(([n,s])  => !priorityKws.some(k => n.includes(k)) && s !== 'その他')
+    .sort(([a],[b])  => a.localeCompare(b));
+  const sonoOther     = allEntries
+    .filter(([n,s])  => !priorityKws.some(k => n.includes(k)) && s === 'その他')
+    .sort(([a],[b])  => a.localeCompare(b));
+  const sortedEntries = [...priorityLines, ...middleLines, ...sonoOther];
+  const count         = sortedEntries.length;
+  let wideRows        = sortedEntries.map(([n,s]) => `【${n}】${s}`);
   if (!wideRows.length) wideRows = ['現在、関東他路線に目立った遅延はありません'];
 
   const items = [];
@@ -663,7 +674,8 @@ function renderCards(items) {
       const hl = st.isWide
         ? `<span style="color:${st.rankColor}">${escHtml(st.headlines.join('\n'))}</span>`
         : escHtml(st.headlines.join('\n'));
-      html += `<div class="divider-thin"></div><div class="headlines">${hl}</div>`;
+      const hlClass = st.isWide ? 'headlines headlines-wide' : 'headlines';
+      html += `<div class="divider-thin"></div><div class="${hlClass}">${hl}</div>`;
     }
 
     card.innerHTML = html;
