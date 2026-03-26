@@ -612,27 +612,35 @@ async function refresh() {
   let wideRows        = sortedEntries.map(([n,s]) => `【${n}】${s}`);
   if (!wideRows.length) wideRows = ['現在、関東他路線に目立った遅延はありません'];
 
-  const items = [];
+  // 非広域路線を先に処理してランクを収集
+  const lineItems = [];
   for (const line of TARGET_LINES) {
-    if (line === '広域') {
-      let wRank, wColor;
-      if      (count === 0)  { wRank='-';  wColor='#34A853'; }
-      else if (count <= 3)   { wRank='!';  wColor='#FBBC04'; }
-      else if (count <= 8)   { wRank='!';  wColor='#FF6D01'; }
-      else if (count <= 15)  { wRank='!!'; wColor='#EA4335'; }
-      else                   { wRank='!!'; wColor='#9C27B0'; }
-      const wDesc = count > 0 ? `関東 遅延${count}路線` : '関東他路線 平常';
-      items.push({ line, rank:wRank, rankColor:wColor, desc:wDesc,
-                   delayScore:0, crowdScore:0, headlines:wideRows, isWide:true });
-    } else {
-      const rt      = await fetchRealtimeData(line);
-      const stFull  = officialStatusForLine(line, official);
-      const ri      = calculateRank(rt.delayScore, rt.crowdScore, stFull);
-      items.push({ line, rank:ri.rank, rankColor:ri.color, desc:ri.desc,
-                   delayScore:rt.delayScore, crowdScore:rt.crowdScore,
-                   headlines:rt.headlines.slice(0,2), isWide:false });
-    }
+    if (line === '広域') continue;
+    const rt     = await fetchRealtimeData(line);
+    const stFull = officialStatusForLine(line, official);
+    const ri     = calculateRank(rt.delayScore, rt.crowdScore, stFull);
+    lineItems.push({ line, rank:ri.rank, rankColor:ri.color, desc:ri.desc,
+                     delayScore:rt.delayScore, crowdScore:rt.crowdScore,
+                     headlines:rt.headlines.slice(0,2), isWide:false });
   }
+
+  // 東急田園都市線以降のランクサマリー
+  const rankSummary = lineItems.map(it => ({ rank: it.rank, color: it.rankColor }));
+
+  // 広域アイテム
+  let wRank, wColor;
+  if      (count === 0)  { wRank='-';  wColor='#34A853'; }
+  else if (count <= 3)   { wRank='!';  wColor='#FBBC04'; }
+  else if (count <= 8)   { wRank='!';  wColor='#FF6D01'; }
+  else if (count <= 15)  { wRank='!!'; wColor='#EA4335'; }
+  else                   { wRank='!!'; wColor='#9C27B0'; }
+  const wDesc = count > 0 ? `関東 遅延${count}路線` : '関東他路線 平常';
+
+  const items = [
+    { line:'広域', rank:wRank, rankColor:wColor, desc:wDesc,
+      delayScore:0, crowdScore:0, headlines:wideRows, isWide:true, rankSummary },
+    ...lineItems
+  ];
 
   renderCards(items);
   setFetchStatus(items.length === 0 ? 'NG' : 'OK', '#26C6DA');
@@ -670,10 +678,24 @@ function renderCards(items) {
         `</div>`;
     }
 
-    if (st.headlines.length > 0) {
-      const hl = st.isWide
-        ? `<span style="color:${st.rankColor}">${escHtml(st.headlines.join('\n'))}</span>`
-        : escHtml(st.headlines.join('\n'));
+    const hasContent = st.headlines.length > 0 || (st.rankSummary && st.rankSummary.length > 0);
+    if (hasContent) {
+      let hl;
+      if (st.isWide) {
+        const parts = [];
+        if (st.rankSummary && st.rankSummary.length > 0) {
+          const summaryHtml = st.rankSummary
+            .map(r => `<span style="color:${r.color};font-weight:700">${escHtml(r.rank)}</span>`)
+            .join('<span style="color:#555"> / </span>');
+          parts.push(`<div style="margin-bottom:4px">${summaryHtml}</div>`);
+        }
+        if (st.headlines.length > 0) {
+          parts.push(`<div style="color:${st.rankColor};white-space:pre-wrap">${escHtml(st.headlines.join('\n'))}</div>`);
+        }
+        hl = parts.join('');
+      } else {
+        hl = escHtml(st.headlines.join('\n'));
+      }
       const hlClass = st.isWide ? 'headlines headlines-wide' : 'headlines';
       html += `<div class="divider-thin"></div><div class="${hlClass}">${hl}</div>`;
     }
