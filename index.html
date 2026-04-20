@@ -258,19 +258,20 @@
 const PROXY_BASE = 'https://trainwatch-proxy.s-tanaka-vega.workers.dev/?url=';
 
 const TRANSIT_URL    = 'https://transit.yahoo.co.jp/diainfo/area/4';
-const REALTIME_BASE  = 'https://search.yahoo.co.jp/realtime/search';
+const DETAIL_BASE    = 'https://transit.yahoo.co.jp/diainfo';
 
 const TARGET_LINES = [
   '広域', '東急田園都市線', '小田急江ノ島線',
   '小田急小田原線', 'ＪＲ横浜線', '相鉄本線'
 ];
 
-const LINE_KEYWORDS = {
-  '東急田園都市線': ['渋谷','三軒茶屋','二子玉川','溝の口','あざみ野','青葉台','長津田','中央林間','田園都市線'],
-  '小田急江ノ島線': ['相模大野','中央林間','大和','藤沢','片瀬江ノ島','江ノ島線'],
-  '小田急小田原線': ['新宿','下北沢','登戸','新百合ヶ丘','町田','海老名','本厚木','秦野','小田原','小田原線'],
-  'ＪＲ横浜線':    ['東神奈川','菊名','新横浜','中山','長津田','町田','橋本','八王子','横浜線'],
-  '相鉄本線':      ['横浜','西谷','二俣川','大和','海老名','瀬谷','希望ヶ丘','三ツ境','相鉄'],
+// Yahoo 運行情報 詳細ページ ID（埋め込みツイートを含む）
+const LINE_DETAIL_ID = {
+  '東急田園都市線': 114,
+  '小田急江ノ島線': 110,
+  '小田急小田原線': 109,
+  'ＪＲ横浜線':    31,
+  '相鉄本線':      125,
 };
 
 const TARGET_LINE_KEYMAP = {
@@ -501,69 +502,94 @@ async function fetchOfficialStatus() {
   }
 }
 
-async function fetchRealtimeData(lineName) {
-  const delayKws = '遅延 OR 止ま OR 見合 OR 遅れ OR 遅い';
-  const crowdKws = '混雑 OR 混み OR 混ん OR 人多 OR 満員';
-  const kws      = LINE_KEYWORDS[lineName] || [lineName];
-  const query    = `(${kws.join(' OR ')}) (${delayKws} OR ${crowdKws})`;
-  const url      = `${REALTIME_BASE}?p=${encodeURIComponent(query)}&rank=recent`;
+// 詳細ページからツイート本文＋遅延分数を抽出する
+async function fetchLineDetail(lineName) {
+  const id = LINE_DETAIL_ID[lineName];
+  if (!id) return { delayScore: 0, crowdScore: 0, headlines: [], delayMin: 0 };
+  const url = `${DETAIL_BASE}/${id}/0`;
 
   try {
     const html   = await fetchViaProxy(url);
     const parser = new DOMParser();
     const doc    = parser.parseFromString(html, 'text/html');
 
-    // article本文のみ集約（トレンドサイドバー・UIテキストを除外）
-    const headlines = [];
-    const seen      = new Set();
-    const articleTexts = [];
-    doc.querySelectorAll('article').forEach(art => {
-      const text = (art.textContent || '').replace(/\s+/g,' ').trim();
-      if (text.length < 15) return;
-      if (text.includes('Yahoo')||text.includes('IDで')||text.includes('利用規約')) return;
-      articleTexts.push(text);
+    // class="tweet" 要素からツイート本文を抽出
+    const tweetEls = doc.querySelectorAll('[class*="tweet"]');
+    const tweetTexts = [];
+    const seen = new Set();
+    tweetEls.forEach(el => {
+      const text = (el.textContent || '').replace(/\s+/g,' ').trim();
+      if (text.length < 10) return;
       if (seen.has(text)) return;
-      headlines.push(text);
       seen.add(text);
+      tweetTexts.push(text);
     });
 
-    const corpus  = articleTexts.join(' ');
-    const countOf = (str, sub) => str.split(sub).length - 1;
-    const dScore  = ['遅延','止ま','見合','遅れ'].reduce((s,w)=>s+countOf(corpus,w), 0);
-    const cScore  = ['混雑','混み','人多','入場規制'].reduce((s,w)=>s+countOf(corpus,w), 0);
+    // スコア（ツイート本文コーパスから）
+    const corpus  = tweetTexts.join(' ');
+    const countOf = (s, sub) => s.split(sub).length - 1;
+    const dScore  = ['遅延','止ま','見合','遅れ','運転見合','運転見合わせ'].reduce((s,w)=>s+countOf(corpus,w), 0);
+    const cScore  = ['混雑','混み','人多','入場規制','満員'].reduce((s,w)=>s+countOf(corpus,w), 0);
 
-    return { delayScore: dScore, crowdScore: cScore, headlines: headlines.slice(0, 3) };
+    // 遅延分数抽出: ツイート文中の「X分」のうち、
+    // ・「分前」（投稿時刻表示）
+    // ・「時X分」（時計表記、例 8時30分）
+    // を除外し、遅延文脈近くの値だけ拾う
+    const CTX = '(?:遅|かかっ|かけて|かかり|待|延|ずれ|停滞)';
+    const re = new RegExp(`${CTX}[^。]{0,20}?(\\d{1,3})\\s*分(?!前)|([0-9]{1,3})\\s*分(?!前)[^。]{0,20}?${CTX}`, 'g');
+    let delayMin = 0;
+    for (const t of tweetTexts) {
+      // 「8時30分」のような時刻表記を一旦除去
+      const cleaned = t.replace(/\d{1,2}時\d{1,2}分/g, '');
+      for (const m of cleaned.matchAll(re)) {
+        const n = parseInt(m[1] || m[2], 10);
+        if (!isNaN(n) && n > 0 && n < 300) delayMin = Math.max(delayMin, n);
+      }
+      // 「N時間」表記
+      for (const m of cleaned.matchAll(/(\d{1,2})\s*時間[^。]{0,10}?(?:遅|かかっ|かけて|停滞|見合)/g)) {
+        const n = parseInt(m[1], 10) * 60;
+        if (!isNaN(n)) delayMin = Math.max(delayMin, n);
+      }
+    }
+
+    return { delayScore: dScore, crowdScore: cScore, headlines: tweetTexts.slice(0, 3), delayMin };
   } catch(e) {
-    console.warn('realtime', lineName, e);
-    return { delayScore: 0, crowdScore: 0, headlines: [] };
+    console.warn('detail', lineName, e);
+    return { delayScore: 0, crowdScore: 0, headlines: [], delayMin: 0 };
   }
 }
 
 // ============================================================
 // ランク算出
 // ============================================================
-function calculateRank(delayScore, crowdScore, statusText) {
+function calculateRank(delayScore, crowdScore, statusText, tweetDelayMin = 0) {
   if (statusText.includes('情報取得失敗'))
     return { rank:'-', color:'#5f6368', desc:'失敗' };
 
   const isNormal = statusText.includes('平常運転');
+  // 公式本文＋ツイートから拾った遅延分の最大値
+  const delayMin = Math.max(extractDelayMin(statusText), tweetDelayMin);
+
   if (!isNormal) {
     // E: 運行停止レベル
     if (['見合わせ','運休','中断','脱線','不通','運転停止','全線ストップ'].some(w=>statusText.includes(w)))
       return { rank:'E', color:'#B21111', desc:'不通' };
     // D: 45分以上の遅れ or 強キーワード
-    const delayMin = extractDelayMin(statusText);
-    const strongD  = ['大幅','大規模','ダイヤ乱れ','長時間','遅延拡大','混乱'].some(w=>statusText.includes(w));
+    const strongD = ['大幅','大規模','ダイヤ乱れ','長時間','遅延拡大','混乱'].some(w=>statusText.includes(w));
     if (strongD || delayMin >= 45)
       return { rank:'D', color:'#FF6D01', desc:'大遅' };
-    // C: 通常の遅延（「影響」「停止」等の弱キーワードはここに落とす）
+    // C: 通常の遅延
     return { rank:'C', color:'#EA4335', desc:'遅延' };
   }
-  // 平常時: SNSスコアは補助（B/A-/A のみ。平常時 D は設定せず）
-  // ※ スコアは article 本文のみカウント。以前より桁が小さくなる想定
-  if (delayScore >= 20) return { rank:'B', color:'#FBBC04', desc:'予兆' };
-  if (delayScore >= 8 || crowdScore >= 6) {
-    const desc = crowdScore > delayScore/2 ? '混雑' : '微遅';
+
+  // 平常時: ツイートが大きな遅れを訴えていれば昇格
+  if (tweetDelayMin >= 45) return { rank:'D', color:'#FF6D01', desc:'大遅' };
+  if (tweetDelayMin >= 20) return { rank:'C', color:'#EA4335', desc:'遅延' };
+  // B: 予兆
+  if (delayScore >= 8 || tweetDelayMin >= 10) return { rank:'B', color:'#FBBC04', desc:'予兆' };
+  // A-: 混雑・微遅
+  if (delayScore >= 3 || crowdScore >= 3) {
+    const desc = crowdScore > delayScore ? '混雑' : '微遅';
     return { rank:'A-', color:'#A8D18D', desc };
   }
   return { rank:'A', color:'#34A853', desc:'平常' };
@@ -636,11 +662,12 @@ async function refresh() {
   const lineItems = [];
   for (const line of TARGET_LINES) {
     if (line === '広域') continue;
-    const rt     = await fetchRealtimeData(line);
+    const rt     = await fetchLineDetail(line);
     const stFull = officialStatusForLine(line, official);
-    const ri     = calculateRank(rt.delayScore, rt.crowdScore, stFull);
+    const ri     = calculateRank(rt.delayScore, rt.crowdScore, stFull, rt.delayMin);
     lineItems.push({ line, rank:ri.rank, rankColor:ri.color, desc:ri.desc,
                      delayScore:rt.delayScore, crowdScore:rt.crowdScore,
+                     delayMin:rt.delayMin,
                      headlines:rt.headlines.slice(0,2), isWide:false });
   }
 
@@ -687,6 +714,7 @@ function renderCards(items) {
       `<div class="card-desc" style="${descStyle}">${escHtml(st.desc)}</div>`;
 
     if (!st.isWide) {
+      const minColor = st.delayMin>=45 ? '#FF6D01' : st.delayMin>=20 ? '#EA4335' : st.delayMin>=10 ? '#FBBC04' : '#555';
       html +=
         `<div class="scores">` +
         `<span style="color:#555">遅:</span>` +
@@ -695,6 +723,9 @@ function renderCards(items) {
         `<span style="color:#555">　混:</span>` +
         `<span style="color:${scoreCrowdColor(st.crowdScore)};font-weight:${st.crowdScore>=15?600:400}">` +
           `${st.crowdScore}</span>` +
+        `<span style="color:#555">　分:</span>` +
+        `<span style="color:${minColor};font-weight:${st.delayMin>=20?600:400}">` +
+          `${st.delayMin||0}</span>` +
         `</div>`;
     }
 
