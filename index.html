@@ -446,7 +446,12 @@ function renderWeather() {
     if (!info) continue;
     document.getElementById(info.elemId).innerHTML =
       `<span class="weather-location" style="color:${info.labelColor}">${info.label}</span>` +
-      `<span style="white-space:nowrap">${info.icon}&thinsp;<span style="color:${wmoDescColor(info.code)}">${escHtml(info.weatherDesc)}</span>&ensp;<span style="color:${tempColor(info.tempValue, info.code)}">${info.temp}°C</span>&ensp;<span style="color:${precipColor(info.precipProb)}">${info.precipProb}%</span></span>`;
+      `<span style="white-space:nowrap">` +
+        `<span style="display:inline-block;width:1.6em;text-align:center">${info.icon}</span>` +
+        `<span style="display:inline-block;min-width:5.5em;color:${wmoDescColor(info.code)}">${escHtml(info.weatherDesc)}</span>` +
+        `<span style="color:${tempColor(info.tempValue, info.code)}">${info.temp}°C</span>&ensp;` +
+        `<span style="color:${precipColor(info.precipProb)}">${info.precipProb}%</span>` +
+      `</span>`;
   }
 
   // 明日 各地点
@@ -457,7 +462,12 @@ function renderWeather() {
     const t = info.tomorrow;
     document.getElementById(info.tomorrowElemId).innerHTML =
       `<span class="weather-location" style="color:${info.labelColor};opacity:0.45">${info.label}</span>` +
-      `<span style="white-space:nowrap">${t.icon}&thinsp;<span style="color:${wmoDescColor(t.code)}">${escHtml(t.weatherDesc)}</span>&ensp;<span style="color:${tempColor(t.tempMax, t.code)}">${t.tempMax}°C</span><span style="color:#666">/</span><span style="color:${tempColor(t.tempMin, t.code)}">${t.tempMin}°C</span>&ensp;<span style="color:${precipColor(t.precipProb)}">${t.precipProb}%</span></span>`;
+      `<span style="white-space:nowrap">` +
+        `<span style="display:inline-block;width:1.6em;text-align:center">${t.icon}</span>` +
+        `<span style="display:inline-block;min-width:5.5em;color:${wmoDescColor(t.code)}">${escHtml(t.weatherDesc)}</span>` +
+        `<span style="color:${tempColor(t.tempMax, t.code)}">${t.tempMax}°C</span><span style="color:#666">/</span><span style="color:${tempColor(t.tempMin, t.code)}">${t.tempMin}°C</span>&ensp;` +
+        `<span style="color:${precipColor(t.precipProb)}">${t.precipProb}%</span>` +
+      `</span>`;
   }
 }
 
