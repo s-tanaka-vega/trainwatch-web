@@ -544,14 +544,16 @@ function calculateRank(delayScore, crowdScore, statusText) {
 
   const isNormal = statusText.includes('平常運転');
   if (!isNormal) {
-    if (['見合わせ','運休','中断','脱線','不通'].some(w=>statusText.includes(w)))
+    if (['見合わせ','運休','中断','脱線','不通','運転停止','全線ストップ'].some(w=>statusText.includes(w)))
       return { rank:'E', color:'#B21111', desc:'不通' };
-    if (['大幅','影響','停止'].some(w=>statusText.includes(w)))
+    if (['大幅','大きな','大きく','影響','停止','遅延拡大','混乱','ダイヤ乱れ'].some(w=>statusText.includes(w))
+        || delayScore >= 150)
       return { rank:'D', color:'#FF6D01', desc:'大遅' };
     return { rank:'C', color:'#EA4335', desc:'遅延' };
   }
-  if (delayScore >= 50) return { rank:'B',  color:'#FBBC04', desc:'予兆' };
-  if (delayScore >= 20 || crowdScore >= 15) {
+  if (delayScore >= 200) return { rank:'D', color:'#FF6D01', desc:'大遅' };
+  if (delayScore >= 100) return { rank:'B', color:'#FBBC04', desc:'予兆' };
+  if (delayScore >= 40 || crowdScore >= 25) {
     const desc = crowdScore > delayScore/2 ? '混雑' : '微遅';
     return { rank:'A-', color:'#A8D18D', desc };
   }
