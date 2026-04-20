@@ -513,20 +513,24 @@ async function fetchRealtimeData(lineName) {
     const parser = new DOMParser();
     const doc    = parser.parseFromString(html, 'text/html');
 
+    // article本文のみ集約（トレンドサイドバー・UIテキストを除外）
     const headlines = [];
     const seen      = new Set();
+    const articleTexts = [];
     doc.querySelectorAll('article').forEach(art => {
       const text = (art.textContent || '').replace(/\s+/g,' ').trim();
       if (text.length < 15) return;
       if (text.includes('Yahoo')||text.includes('IDで')||text.includes('利用規約')) return;
+      articleTexts.push(text);
       if (seen.has(text)) return;
       headlines.push(text);
       seen.add(text);
     });
 
+    const corpus  = articleTexts.join(' ');
     const countOf = (str, sub) => str.split(sub).length - 1;
-    const dScore  = ['遅延','止ま','見合','遅れ'].reduce((s,w)=>s+countOf(html,w), 0);
-    const cScore  = ['混雑','混み','人多','入場規制'].reduce((s,w)=>s+countOf(html,w), 0);
+    const dScore  = ['遅延','止ま','見合','遅れ'].reduce((s,w)=>s+countOf(corpus,w), 0);
+    const cScore  = ['混雑','混み','人多','入場規制'].reduce((s,w)=>s+countOf(corpus,w), 0);
 
     return { delayScore: dScore, crowdScore: cScore, headlines: headlines.slice(0, 3) };
   } catch(e) {
@@ -547,17 +551,18 @@ function calculateRank(delayScore, crowdScore, statusText) {
     // E: 運行停止レベル
     if (['見合わせ','運休','中断','脱線','不通','運転停止','全線ストップ'].some(w=>statusText.includes(w)))
       return { rank:'E', color:'#B21111', desc:'不通' };
-    // D: 30分以上の遅れ or 強キーワード
+    // D: 45分以上の遅れ or 強キーワード
     const delayMin = extractDelayMin(statusText);
     const strongD  = ['大幅','大規模','ダイヤ乱れ','長時間','遅延拡大','混乱'].some(w=>statusText.includes(w));
-    if (strongD || delayMin >= 30)
+    if (strongD || delayMin >= 45)
       return { rank:'D', color:'#FF6D01', desc:'大遅' };
     // C: 通常の遅延（「影響」「停止」等の弱キーワードはここに落とす）
     return { rank:'C', color:'#EA4335', desc:'遅延' };
   }
   // 平常時: SNSスコアは補助（B/A-/A のみ。平常時 D は設定せず）
-  if (delayScore >= 100) return { rank:'B', color:'#FBBC04', desc:'予兆' };
-  if (delayScore >= 40 || crowdScore >= 25) {
+  // ※ スコアは article 本文のみカウント。以前より桁が小さくなる想定
+  if (delayScore >= 20) return { rank:'B', color:'#FBBC04', desc:'予兆' };
+  if (delayScore >= 8 || crowdScore >= 6) {
     const desc = crowdScore > delayScore/2 ? '混雑' : '微遅';
     return { rank:'A-', color:'#A8D18D', desc };
   }
