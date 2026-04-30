@@ -760,16 +760,25 @@ function renderCards(items) {
     const card = document.createElement('div');
     card.className = 'card';
 
-    const descStyle = st.isWide
-      ? `color:${st.rankColor};font-weight:${st.rank!=='-'?600:400}`
-      : '';
-
-    let html =
-      `<div class="card-header">` +
-      `<span class="line-name">${escHtml(st.line)}</span>` +
-      `<span class="rank-badge" style="color:${st.rankColor}">${escHtml(st.rank)}</span>` +
-      `</div>` +
-      `<div class="card-desc" style="${descStyle}">${escHtml(st.desc)}</div>`;
+    let html;
+    if (st.isWide) {
+      const countLabel = st.wideCount > 0 ? `遅延 ${st.wideCount}路線` : '平常';
+      html =
+        `<div class="card-header">` +
+        `<span class="line-name">${escHtml(st.line)}</span>` +
+        `<span style="display:flex;align-items:center;gap:10px">` +
+          `<span style="color:${st.rankColor};font-weight:600">${escHtml(countLabel)}</span>` +
+          `<span class="rank-badge" style="color:${st.rankColor}">${escHtml(st.rank)}</span>` +
+        `</span>` +
+        `</div>`;
+    } else {
+      html =
+        `<div class="card-header">` +
+        `<span class="line-name">${escHtml(st.line)}</span>` +
+        `<span class="rank-badge" style="color:${st.rankColor}">${escHtml(st.rank)}</span>` +
+        `</div>` +
+        `<div class="card-desc">${escHtml(st.desc)}</div>`;
+    }
 
     if (!st.isWide) {
       const minColor = st.delayMin>=45 ? '#FF6D01' : st.delayMin>=20 ? '#EA4335' : st.delayMin>=10 ? '#FBBC04' : '#555';
