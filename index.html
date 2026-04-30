@@ -231,12 +231,18 @@
       <div id="minamimachida-tomorrow-row" class="weather-row weather-row-sm"></div>
     </div>
   </div>
+  <div id="countdown-panel" style="flex:1;display:none">
+    <div id="countdown-main" style="font-size:1.6rem;font-weight:700;color:#FBBC04;line-height:1.2"></div>
+    <div id="countdown-sub"  style="font-size:0.85rem;color:#888;margin-top:4px"></div>
+  </div>
 </div>
 
 <div id="weather-links">
   <a href="https://tenki.jp/forecast/3/17/4620/14211/1hour.html" target="_blank">秦野天気</a>
   <span class="weather-link-sep">/</span>
   <a href="https://transit.yahoo.co.jp/traininfo/area/4/" target="_blank">関東広域電車情報</a>
+  <span class="weather-link-sep">/</span>
+  <a href="javascript:void(0)" id="countdown-btn" onclick="toggleCustomCountdown()">任意時刻</a>
 </div>
 
 <div id="cards">
@@ -821,10 +827,178 @@ function updateClock() {
 }
 
 // ============================================================
+// カウントダウン (最大2個・最近のものを大きく表示)
+// ============================================================
+const COUNTDOWN_MAX = 2;
+let countdownTargets = []; // { label: 'HH:MM', desc, time: Date }
+
+// 自動カウントダウンの定型スケジュール (HH:MM 順)
+const COUNTDOWN_SCHEDULE = [
+  { time: '8:04',  desc: '秦野 小田急' },
+  { time: '8:13',  desc: '秦野 小田急' },
+  { time: '8:46',  desc: '相模大野 小田急' },
+  { time: '8:52',  desc: '相模大野 小田急' },
+  { time: '8:55',  desc: '中央林間 田園都市' },
+  { time: '9:01',  desc: '中央林間 田園都市' },
+  { time: '9:15',  desc: '出社' },
+  { time: '12:00', desc: '昼食' },
+  { time: '13:00', desc: '午後' },
+  { time: '18:15', desc: '終業' },
+  { time: '18:23', desc: '南町田 田園都市' },
+  { time: '18:26', desc: '南町田 田園都市' },
+  { time: '18:35', desc: '中央林間 小田急' },
+  { time: '18:45', desc: '相模大野 小田急' },
+  { time: '19:18', desc: '秦野 到着' },
+];
+
+function makeTargetFromHHMM(timeStr, desc, fromDate) {
+  const m = timeStr.match(/^(\d{1,2}):(\d{1,2})$/);
+  if (!m) return null;
+  const hh = parseInt(m[1],10), mm = parseInt(m[2],10);
+  if (hh>23||mm>59) return null;
+  const t = new Date(fromDate);
+  t.setHours(hh, mm, 0, 0);
+  if (t <= fromDate) t.setDate(t.getDate() + 1); // 過ぎていたら翌日
+  const pad = n => String(n).padStart(2,'0');
+  return { label: `${pad(hh)}:${pad(mm)}`, desc, time: t };
+}
+
+function refillFromSchedule() {
+  const now = new Date();
+  const keyOf = t => `${t.label}|${t.desc}`;
+  const existing = new Set(countdownTargets.map(keyOf));
+  const candidates = COUNTDOWN_SCHEDULE
+    .map(s => makeTargetFromHHMM(s.time, s.desc, now))
+    .filter(c => c && !existing.has(keyOf(c)))
+    .sort((a, b) => a.time - b.time);
+  while (countdownTargets.length < COUNTDOWN_MAX && candidates.length > 0) {
+    countdownTargets.push(candidates.shift());
+  }
+}
+
+function setCountdownActive(on) {
+  document.getElementById('weather-panel').style.display    = on ? 'none' : '';
+  document.getElementById('countdown-panel').style.display  = on ? '' : 'none';
+}
+
+function refreshCountdownButton() {
+  const btn = document.getElementById('countdown-btn');
+  const custom = countdownTargets.find(t => t.isCustom);
+  btn.textContent = custom ? `任意: ${custom.label}` : '任意時刻';
+}
+
+function parseTargetTime(input) {
+  const trimmed = input.trim();
+  const m = trimmed.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?(?:\s+(.+))?$/);
+  if (!m) return null;
+  const hh = parseInt(m[1],10), mm = parseInt(m[2],10), ss = parseInt(m[3]||'0',10);
+  const desc = (m[4] || '').trim();
+  if (hh>23||mm>59||ss>59) return null;
+  const now    = new Date();
+  const target = new Date(now);
+  target.setHours(hh, mm, ss, 0);
+  if (target <= now) target.setDate(target.getDate() + 1);
+  const pad = n => String(n).padStart(2,'0');
+  return {
+    label: `${pad(hh)}:${pad(mm)}${ss ? ':'+pad(ss) : ''}`,
+    desc,
+    time: target,
+  };
+}
+
+function toggleCustomCountdown() {
+  const existing = countdownTargets.find(t => t.isCustom);
+  const help = existing
+    ? `任意時刻 (現: ${existing.label} ${existing.desc})。新時刻で上書き、空欄で解除。`
+    : '任意時刻 (例: 14:30 打合せ)。HTMLを開いている間だけ保持。';
+  const input = prompt(help, '');
+  if (input === null) return;
+  // 既存の任意時刻はいったん除去
+  countdownTargets = countdownTargets.filter(t => !t.isCustom);
+  if (input.trim() !== '') {
+    const t = parseTargetTime(input);
+    if (!t) { alert('形式が違います: HH:MM 説明'); return; }
+    t.isCustom = true;
+    countdownTargets.push(t);
+    // 上限超過時は自動枠の最遠を退避
+    if (countdownTargets.length > COUNTDOWN_MAX) {
+      let farIdx = -1, farTime = -Infinity;
+      countdownTargets.forEach((x, i) => {
+        if (!x.isCustom && x.time > farTime) { farTime = x.time; farIdx = i; }
+      });
+      if (farIdx >= 0) countdownTargets.splice(farIdx, 1);
+    }
+  }
+  setCountdownActive(true);
+  refreshCountdownButton();
+  updateCountdown();
+}
+
+const COUNTDOWN_GRACE_MS = 60 * 1000; // 期限後の表示維持時間
+
+function updateCountdown() {
+  const now = new Date();
+  // 期限超過から1分以上経過したものは削除
+  countdownTargets = countdownTargets.filter(t => now - t.time < COUNTDOWN_GRACE_MS);
+  // 自動スケジュールから補充
+  refillFromSchedule();
+  if (countdownTargets.length === 0) {
+    setCountdownActive(false);
+    refreshCountdownButton();
+    return;
+  }
+  setCountdownActive(true);
+  // 最も近いもの（過去含む、小さい時刻が先）
+  countdownTargets.sort((a,b) => a.time - b.time);
+  const fmtRemain = (date) => {
+    const diff = date - now;
+    if (diff <= 0) return { sec: 0, hms: '0:00' };
+    const s   = Math.ceil(diff / 1000);
+    const pad = n => String(n).padStart(2,'0');
+    const hh  = Math.floor(s / 3600);
+    const mm  = Math.floor((s % 3600) / 60);
+    const ss  = s % 60;
+    return { sec: s, hms: hh > 0 ? `${hh}:${pad(mm)}:${pad(ss)}` : `${mm}:${pad(ss)}` };
+  };
+  const colorOf = s => {
+    if (s <=  60) return '#EA4335'; // 期限後/1分以下: 赤
+    if (s <= 120) return '#FF6D01'; // 2分以下: オレンジ
+    if (s <= 300) return '#F9A825'; // 5分以下: 濃いめの黄
+    if (s <= 600) return '#AB47BC'; // 10分以下: 紫
+    return '#BDBDBD';               // それ以上: 薄めの白(灰)
+  };
+  const nearest = countdownTargets[0];
+  const r = fmtRemain(nearest.time);
+  const main = document.getElementById('countdown-main');
+  const descPart = nearest.desc ? ` ${nearest.desc}` : '';
+  const mark = nearest.isCustom ? '★ ' : '';
+  main.textContent = `${mark}${nearest.label}${descPart}  あと ${r.hms}`;
+  main.style.color = colorOf(r.sec);
+  // サブ: 2件目があれば表示
+  const sub = document.getElementById('countdown-sub');
+  if (countdownTargets.length > 1) {
+    const next  = countdownTargets[1];
+    const nr    = fmtRemain(next.time);
+    const nDesc = next.desc ? ` ${next.desc}` : '';
+    const nMark = next.isCustom ? '★ ' : '';
+    sub.textContent = `次: ${nMark}${next.label}${nDesc}  あと ${nr.hms}`;
+    sub.style.color = colorOf(nr.sec);
+  } else {
+    sub.textContent = '';
+  }
+}
+
+// ============================================================
 // 起動
 // ============================================================
 updateClock();
 setInterval(updateClock, 1000);
+// 自動スケジュールでカウントダウン開始
+refillFromSchedule();
+setCountdownActive(true);
+refreshCountdownButton();
+updateCountdown();
+setInterval(updateCountdown, 1000);
 
 // バッテリー
 (async () => {
