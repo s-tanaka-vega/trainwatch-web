@@ -731,6 +731,11 @@ async function refresh() {
 
   // 東急田園都市線以降のランクサマリー
   const rankSummary = lineItems.map(it => ({ rank: it.rank, color: it.rankColor }));
+  // 小田急 or 田園都市 が遅延しているかどうか（件数末尾表示の条件）
+  const userPriorityKws  = ['東急田園都市', '小田急'];
+  const hasUserDelayed   = lineItems.some(it =>
+    it.rank !== 'A' && userPriorityKws.some(k => it.line.includes(k))
+  );
 
   // 広域アイテム
   let wRank, wColor;
@@ -743,7 +748,8 @@ async function refresh() {
 
   const items = [
     { line:'広域', rank:wRank, rankColor:wColor, desc:wDesc,
-      delayScore:0, crowdScore:0, headlines:wideRows, isWide:true, rankSummary, wideCount: count },
+      delayScore:0, crowdScore:0, headlines:wideRows, isWide:true,
+      rankSummary, wideCount: count, hasUserDelayed },
     ...lineItems
   ];
 
@@ -806,10 +812,15 @@ function renderCards(items) {
           .map(r => `<span style="color:${r.color}">${escHtml(r.rank)}</span>`)
           .join(sep));
       }
-      // 関東広域の遅延路線数を末尾に色付きで追加
-      const c = st.wideCount;
-      const countText = c === 0 ? '−' : String(c);
-      parts.push(`<span style="color:${st.rankColor}">${countText}</span>`);
+      // 関東広域に遅延がある時は件数を末尾に追加
+      // - 小田急 or 田園都市 が遅延 → 「件数 + !!」
+      // - それ以外（横浜線・相鉄・他社のみ遅延） → 件数だけ
+      if (st.wideCount > 0) {
+        const tail = st.hasUserDelayed
+          ? `${st.wideCount} ${escHtml(st.rank)}`
+          : `${st.wideCount}`;
+        parts.push(`<span style="color:${st.rankColor}">${tail}</span>`);
+      }
       rankRow.innerHTML = parts.join(sep);
     }
 
