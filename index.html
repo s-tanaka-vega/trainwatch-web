@@ -233,8 +233,8 @@
     </div>
   </div>
   <div id="countdown-panel" style="flex:1;display:none;font-family:'Nunito','Arial Rounded MT Bold','Hiragino Maru Gothic ProN',sans-serif">
-    <div id="countdown-main" style="font-size:1.6rem;font-weight:700;color:#FBBC04;line-height:1.2;letter-spacing:0.02em"></div>
-    <div id="countdown-sub"  style="font-size:1.35rem;font-weight:600;color:#888;margin-top:8px;letter-spacing:0.02em"></div>
+    <div id="countdown-main" style="font-size:clamp(1.8rem, 6.4vw, 2.4rem);font-weight:700;color:#FBBC04;line-height:1.15;letter-spacing:0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+    <div id="countdown-sub"  style="font-size:clamp(1.4rem, 5vw, 1.85rem);font-weight:600;color:#888;margin-top:8px;letter-spacing:0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
   </div>
 </div>
 
@@ -244,8 +244,10 @@
   <a href="https://transit.yahoo.co.jp/traininfo/area/4/" target="_blank">関東広域電車情報</a>
   <span class="weather-link-sep">/</span>
   <a href="javascript:void(0)" id="cd-toggle-btn" onclick="toggleCountdownMode()">カウントダウン</a>
-  <span class="weather-link-sep">/</span>
-  <a href="javascript:void(0)" id="countdown-btn" onclick="toggleCustomCountdown()">任意時刻</a>
+  <span id="custom-cd-wrap" style="display:none">
+    <span class="weather-link-sep">/</span>
+    <a href="javascript:void(0)" id="countdown-btn" onclick="toggleCustomCountdown()">任意時刻</a>
+  </span>
 </div>
 
 <div id="cards">
@@ -895,6 +897,7 @@ function refreshCountdownButton() {
 
 function toggleCountdownMode() {
   countdownMode = !countdownMode;
+  document.getElementById('custom-cd-wrap').style.display = countdownMode ? '' : 'none';
   if (countdownMode) {
     refillFromSchedule();
     setCountdownActive(true);
@@ -1009,9 +1012,8 @@ function updateCountdown() {
   const r = fmtRemain(nearest.time);
   const main = document.getElementById('countdown-main');
   const descPart = nearest.desc ? ` ${nearest.desc}` : '';
-  const mark = nearest.isCustom ? '★ ' : '';
   main.innerHTML =
-    `${escHtml(mark + nearest.label + descPart)}  ` +
+    `${escHtml(nearest.label + descPart)}  ` +
     `<span style="color:${colorOf(r.sec)}">${escHtml(r.hms)}</span>`;
   main.style.color = ''; // 既定色（ラベル/説明は中立）
   // サブ: 2件目があれば表示
@@ -1020,9 +1022,8 @@ function updateCountdown() {
     const next  = countdownTargets[1];
     const nr    = fmtRemain(next.time);
     const nDesc = next.desc ? ` ${next.desc}` : '';
-    const nMark = next.isCustom ? '★ ' : '';
     sub.innerHTML =
-      `${escHtml(nMark + next.label + nDesc)}  ` +
+      `${escHtml(next.label + nDesc)}  ` +
       `<span style="color:${colorOf(nr.sec)}">${escHtml(nr.hms)}</span>`;
     sub.style.color = '';
   } else {
