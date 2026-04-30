@@ -896,10 +896,13 @@ function refreshCountdownButton() {
   if (tBtn) tBtn.textContent = countdownMode ? '天気に戻す' : 'カウントダウン';
 }
 
-function toggleCountdownMode() {
-  countdownMode = !countdownMode;
-  document.getElementById('custom-cd-wrap').style.display = countdownMode ? '' : 'none';
-  if (countdownMode) {
+const LS_COUNTDOWN_MODE = 'trainwatch_countdown_mode';
+
+function applyCountdownMode(on) {
+  countdownMode = on;
+  try { localStorage.setItem(LS_COUNTDOWN_MODE, on ? '1' : '0'); } catch(e) {}
+  document.getElementById('custom-cd-wrap').style.display = on ? '' : 'none';
+  if (on) {
     refillFromSchedule();
     setCountdownActive(true);
     updateCountdown();
@@ -908,6 +911,10 @@ function toggleCountdownMode() {
     setCountdownActive(false);
   }
   refreshCountdownButton();
+}
+
+function toggleCountdownMode() {
+  applyCountdownMode(!countdownMode);
 }
 
 function parseTargetTime(input) {
@@ -1039,6 +1046,11 @@ updateClock();
 setInterval(updateClock, 1000);
 refreshCountdownButton();
 setInterval(updateCountdown, 1000);
+
+// 前回モードの復元
+try {
+  if (localStorage.getItem(LS_COUNTDOWN_MODE) === '1') applyCountdownMode(true);
+} catch(e) {}
 
 // バッテリー
 (async () => {
