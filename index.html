@@ -221,8 +221,8 @@
 <div class="divider-purple"></div>
 
 <div id="countdown-panel" style="display:none;padding:4px 16px 8px;font-family:'Nunito','Arial Rounded MT Bold','Hiragino Maru Gothic ProN',sans-serif">
-  <div id="countdown-main" style="font-size:clamp(1.4rem, 5vw, 1.9rem);font-weight:700;color:#FBBC04;line-height:1.15;letter-spacing:0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
-  <div id="countdown-sub"  style="font-size:clamp(1.1rem, 4vw, 1.55rem);font-weight:600;color:#888;margin-top:6px;letter-spacing:0.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+  <div id="countdown-main" style="font-size:clamp(1.4rem, 5vw, 1.9rem);font-weight:900;color:#FBBC04;line-height:1.15;letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+  <div id="countdown-sub"  style="font-size:clamp(1.1rem, 4vw, 1.55rem);font-weight:700;color:#888;margin-top:6px;letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
 </div>
 
 <div id="status-bar">
@@ -1021,7 +1021,7 @@ function updateCountdown() {
   const descPart = nearest.desc ? ` ${nearest.desc}` : '';
   main.innerHTML =
     `<span style="font-size:0.8em">${escHtml(nearest.label + descPart)}</span>  ` +
-    `<span style="color:${colorOf(r.sec)};font-size:1.65em;font-weight:800">${escHtml(r.hms)}</span>`;
+    `<span style="color:${colorOf(r.sec)};font-size:1.65em;font-weight:900">${escHtml(r.hms)}</span>`;
   main.style.color = ''; // 既定色（ラベル/説明は中立）
   // サブ: 2件目があれば表示
   const sub = document.getElementById('countdown-sub');
@@ -1031,7 +1031,7 @@ function updateCountdown() {
     const nDesc = next.desc ? ` ${next.desc}` : '';
     sub.innerHTML =
       `<span style="font-size:0.8em">${escHtml(next.label + nDesc)}</span>  ` +
-      `<span style="color:${colorOf(nr.sec)};font-size:1.25em;font-weight:700">${escHtml(nr.hms)}</span>`;
+      `<span style="color:${colorOf(nr.sec)};font-size:1.25em;font-weight:800">${escHtml(nr.hms)}</span>`;
     sub.style.color = '';
   } else {
     sub.textContent = '';
