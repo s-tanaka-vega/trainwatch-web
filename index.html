@@ -239,6 +239,8 @@
   </div>
 </div>
 
+<div id="rank-summary-row" style="padding:2px 16px 4px;font-size:1rem;font-weight:700;letter-spacing:0.04em"></div>
+
 <div id="weather-links">
   <a href="https://tenki.jp/forecast/3/17/4620/14211/1hour.html" target="_blank">秦野天気</a>
   <span class="weather-link-sep">/</span>
@@ -776,24 +778,22 @@ function renderCards(items) {
         `</div>`;
     }
 
-    const hasContent = st.headlines.length > 0 || (st.rankSummary && st.rankSummary.length > 0);
-    if (hasContent) {
-      let hl;
-      if (st.isWide) {
-        const parts = [];
-        if (st.rankSummary && st.rankSummary.length > 0) {
-          const summaryHtml = st.rankSummary
-            .map(r => `<span style="color:${r.color};font-weight:700">${escHtml(r.rank)}</span>`)
-            .join('<span style="color:#555"> / </span>');
-          parts.push(`<div style="margin-bottom:4px">${summaryHtml}</div>`);
-        }
-        if (st.headlines.length > 0) {
-          parts.push(`<div style="color:${st.rankColor};white-space:pre-wrap">${escHtml(st.headlines.join('\n'))}</div>`);
-        }
-        hl = parts.join('');
+    // 広域カードのランクサマリーは外部の #rank-summary-row へ移動
+    if (st.isWide) {
+      const rankRow = document.getElementById('rank-summary-row');
+      if (st.rankSummary && st.rankSummary.length > 0) {
+        rankRow.innerHTML = st.rankSummary
+          .map(r => `<span style="color:${r.color}">${escHtml(r.rank)}</span>`)
+          .join('<span style="color:#555"> / </span>');
       } else {
-        hl = escHtml(st.headlines.join('\n'));
+        rankRow.innerHTML = '';
       }
+    }
+
+    if (st.headlines.length > 0) {
+      const hl = st.isWide
+        ? `<div style="color:${st.rankColor};white-space:pre-wrap">${escHtml(st.headlines.join('\n'))}</div>`
+        : escHtml(st.headlines.join('\n'));
       const hlClass = st.isWide ? 'headlines headlines-wide' : 'headlines';
       html += `<div class="divider-thin"></div><div class="${hlClass}">${hl}</div>`;
     }
