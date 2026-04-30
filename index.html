@@ -222,7 +222,7 @@
 
 <div id="countdown-panel" style="display:none;padding:4px 16px 8px;font-family:'Nunito','Arial Rounded MT Bold','Hiragino Maru Gothic ProN',sans-serif">
   <div id="countdown-main" style="font-size:clamp(1.55rem, 5.6vw, 2.15rem);font-weight:900;color:#FBBC04;line-height:1.15;letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
-  <div id="countdown-sub"  style="font-size:clamp(1.2rem, 4.4vw, 1.7rem);font-weight:700;color:#888;margin-top:6px;letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+  <div id="countdown-sub"  style="font-size:clamp(1.45rem, 5.2vw, 2.0rem);font-weight:700;color:#888;margin-top:6px;letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
 </div>
 
 <div id="status-bar">
@@ -1041,13 +1041,17 @@ function updateCountdown() {
     return { sec: s, hms: hh > 0 ? `${hh}:${pad(mm)}:${pad(ss)}` : `${mm}:${pad(ss)}` };
   };
   const colorOf = s => {
-    if (s <=   60) return '#EA4335'; // 1分以下: 赤
-    if (s <=  120) return '#FF6D01'; // 2分以下: オレンジ
-    if (s <=  300) return '#F9A825'; // 5分以下: 濃いめの黄
-    if (s <=  600) return '#4FC3F7'; // 10分以下: 水色
-    if (s <= 1800) return '#1E88E5'; // 30分以下: 濃い青
-    if (s <= 3600) return '#AB47BC'; // 60分以下: 紫
-    return '#388E3C';                // 60分超: 濃いめ緑
+    if (s <=     0) return '#EC407A'; // 期限超過 (0:00 維持中): ピンク
+    if (s <=    60) return '#EA4335'; // 1分以下: 赤
+    if (s <=   120) return '#FF6D01'; // 2分以下: オレンジ
+    if (s <=   300) return '#F9A825'; // 5分以下: 濃いめの黄
+    if (s <=   600) return '#4FC3F7'; // 10分以下: 水色
+    if (s <=  1800) return '#1E88E5'; // 30分以下: 濃い青
+    if (s <=  3600) return '#AB47BC'; // 60分以下: 紫
+    if (s <=  7200) return '#66BB6A'; // 60〜120分: 明るめ緑
+    if (s <= 10800) return '#388E3C'; // 120〜180分: 濃いめ緑
+    if (s <= 43200) return '#546E7A'; // 180分〜12時間: 灰青
+    return '#9E9E9E';                 // 12時間超: 灰
   };
   const nearest = countdownTargets[0];
   const r = fmtRemain(nearest.time);
@@ -1065,7 +1069,7 @@ function updateCountdown() {
     const nDesc = next.desc ? ` ${next.desc}` : '';
     sub.innerHTML =
       `<span style="font-size:0.8em">${escHtml(next.label + nDesc)}</span>  ` +
-      `<span style="color:${colorOf(nr.sec)};font-size:1.25em;font-weight:800">${escHtml(nr.hms)}</span>`;
+      `<span style="color:${colorOf(nr.sec)};font-size:1.55em;font-weight:800">${escHtml(nr.hms)}</span>`;
     sub.style.color = '';
   } else {
     sub.textContent = '';
