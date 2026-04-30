@@ -840,21 +840,21 @@ let countdownMode    = false; // false=天気表示 / true=カウントダウン
 
 // 自動カウントダウンの定型スケジュール (HH:MM 順)
 const COUNTDOWN_SCHEDULE = [
-  { time: '8:04',  desc: '秦野 小田急' },
-  { time: '8:13',  desc: '秦野 小田急' },
-  { time: '8:46',  desc: '相模大野 小田急' },
-  { time: '8:52',  desc: '相模大野 小田急' },
-  { time: '8:55',  desc: '中央林間 田園都市' },
-  { time: '9:01',  desc: '中央林間 田園都市' },
+  { time: '8:04',  desc: '秦野[小]' },
+  { time: '8:13',  desc: '秦野[小]' },
+  { time: '8:46',  desc: '相模大野[小]' },
+  { time: '8:52',  desc: '相模大野[小]' },
+  { time: '8:55',  desc: '中央林間[田]' },
+  { time: '9:01',  desc: '中央林間[田]' },
   { time: '9:15',  desc: '出社' },
   { time: '12:00', desc: '昼食' },
   { time: '13:00', desc: '午後' },
   { time: '18:15', desc: '終業' },
-  { time: '18:23', desc: '南町田 田園都市' },
-  { time: '18:26', desc: '南町田 田園都市' },
-  { time: '18:35', desc: '中央林間 小田急' },
-  { time: '18:45', desc: '相模大野 小田急' },
-  { time: '19:18', desc: '秦野 到着' },
+  { time: '18:23', desc: '南町田[田]' },
+  { time: '18:26', desc: '南町田[田]' },
+  { time: '18:35', desc: '中央林間[小]' },
+  { time: '18:45', desc: '相模大野[小]' },
+  { time: '19:18', desc: '秦野[着]' },
 ];
 
 function makeTargetFromHHMM(timeStr, desc, fromDate) {
@@ -1014,7 +1014,7 @@ function updateCountdown() {
   const main = document.getElementById('countdown-main');
   const descPart = nearest.desc ? ` ${nearest.desc}` : '';
   main.innerHTML =
-    `${escHtml(nearest.label + descPart)}  ` +
+    `<span style="font-size:0.8em">${escHtml(nearest.label + descPart)}</span>  ` +
     `<span style="color:${colorOf(r.sec)}">${escHtml(r.hms)}</span>`;
   main.style.color = ''; // 既定色（ラベル/説明は中立）
   // サブ: 2件目があれば表示
@@ -1024,7 +1024,7 @@ function updateCountdown() {
     const nr    = fmtRemain(next.time);
     const nDesc = next.desc ? ` ${next.desc}` : '';
     sub.innerHTML =
-      `${escHtml(next.label + nDesc)}  ` +
+      `<span style="font-size:0.8em">${escHtml(next.label + nDesc)}</span>  ` +
       `<span style="color:${colorOf(nr.sec)}">${escHtml(nr.hms)}</span>`;
     sub.style.color = '';
   } else {
