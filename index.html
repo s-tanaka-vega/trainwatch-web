@@ -221,8 +221,8 @@
 <div class="divider-purple"></div>
 
 <div id="countdown-panel" style="display:none;padding:4px 16px 8px;font-family:'Nunito','Arial Rounded MT Bold','Hiragino Maru Gothic ProN',sans-serif">
-  <div id="countdown-main" style="font-size:clamp(1.4rem, 5vw, 1.9rem);font-weight:900;color:#FBBC04;line-height:1.15;letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
-  <div id="countdown-sub"  style="font-size:clamp(1.1rem, 4vw, 1.55rem);font-weight:700;color:#888;margin-top:6px;letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+  <div id="countdown-main" style="font-size:clamp(1.55rem, 5.6vw, 2.15rem);font-weight:900;color:#FBBC04;line-height:1.15;letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+  <div id="countdown-sub"  style="font-size:clamp(1.2rem, 4.4vw, 1.7rem);font-weight:700;color:#888;margin-top:6px;letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
 </div>
 
 <div id="status-bar">
@@ -840,7 +840,7 @@ let countdownTargets = []; // { label: 'HH:MM', desc, time: Date }
 
 // 表示モード: 天気 → カウントダウン → 両方 のサイクル
 const DISPLAY_MODES  = ['weather', 'countdown', 'both'];
-const MODE_LABEL_JP  = { weather: '天気', countdown: 'カウントダウン', both: 'ALL' };
+const MODE_LABEL_JP  = { weather: '天気', countdown: 'CD', both: 'ALL' };
 let displayMode      = 'weather';
 
 // 自動カウントダウンの定型スケジュール (HH:MM 順)
