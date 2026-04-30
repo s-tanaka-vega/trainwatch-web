@@ -1022,7 +1022,7 @@ function updateCountdown() {
   const descPart = nearest.desc ? ` ${nearest.desc}` : '';
   main.innerHTML =
     `<span style="font-size:0.8em">${escHtml(nearest.label + descPart)}</span>  ` +
-    `<span style="color:${colorOf(r.sec)}">${escHtml(r.hms)}</span>`;
+    `<span style="color:${colorOf(r.sec)};font-size:1.3em;font-weight:800">${escHtml(r.hms)}</span>`;
   main.style.color = ''; // 既定色（ラベル/説明は中立）
   // サブ: 2件目があれば表示
   const sub = document.getElementById('countdown-sub');
@@ -1032,7 +1032,7 @@ function updateCountdown() {
     const nDesc = next.desc ? ` ${next.desc}` : '';
     sub.innerHTML =
       `<span style="font-size:0.8em">${escHtml(next.label + nDesc)}</span>  ` +
-      `<span style="color:${colorOf(nr.sec)}">${escHtml(nr.hms)}</span>`;
+      `<span style="color:${colorOf(nr.sec)};font-size:1.25em;font-weight:700">${escHtml(nr.hms)}</span>`;
     sub.style.color = '';
   } else {
     sub.textContent = '';
