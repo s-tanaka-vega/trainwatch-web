@@ -232,9 +232,9 @@
       <div id="minamimachida-tomorrow-row" class="weather-row weather-row-sm"></div>
     </div>
   </div>
-  <div id="countdown-panel" style="flex:1;display:none">
-    <div id="countdown-main" style="font-size:1.6rem;font-weight:700;color:#FBBC04;line-height:1.2"></div>
-    <div id="countdown-sub"  style="font-size:1.15rem;font-weight:600;color:#888;margin-top:6px"></div>
+  <div id="countdown-panel" style="flex:1;display:none;font-family:'Nunito','Arial Rounded MT Bold','Hiragino Maru Gothic ProN',sans-serif">
+    <div id="countdown-main" style="font-size:1.6rem;font-weight:700;color:#FBBC04;line-height:1.2;letter-spacing:0.02em"></div>
+    <div id="countdown-sub"  style="font-size:1.35rem;font-weight:600;color:#888;margin-top:8px;letter-spacing:0.02em"></div>
   </div>
 </div>
 
@@ -908,10 +908,21 @@ function toggleCountdownMode() {
 
 function parseTargetTime(input) {
   const trimmed = input.trim();
-  const m = trimmed.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?(?:\s+(.+))?$/);
-  if (!m) return null;
-  const hh = parseInt(m[1],10), mm = parseInt(m[2],10), ss = parseInt(m[3]||'0',10);
-  const desc = (m[4] || '').trim();
+  let hh, mm, ss = 0, desc = '';
+  // パターン1: HH:MM[:SS] [説明]
+  let m = trimmed.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?(?:\s+(.+))?$/);
+  if (m) {
+    hh = parseInt(m[1],10); mm = parseInt(m[2],10); ss = parseInt(m[3]||'0',10);
+    desc = (m[4] || '').trim();
+  } else {
+    // パターン2: HHMM / HMM (3〜4桁) [説明]   例: 1024 打合せ / 824 朝食
+    m = trimmed.match(/^(\d{3,4})(?:\s+(.+))?$/);
+    if (!m) return null;
+    const digits = m[1];
+    if (digits.length === 3) { hh = parseInt(digits[0],10);     mm = parseInt(digits.slice(1),10); }
+    else                     { hh = parseInt(digits.slice(0,2),10); mm = parseInt(digits.slice(2),10); }
+    desc = (m[2] || '').trim();
+  }
   if (hh>23||mm>59||ss>59) return null;
   const now    = new Date();
   const target = new Date(now);
@@ -999,8 +1010,10 @@ function updateCountdown() {
   const main = document.getElementById('countdown-main');
   const descPart = nearest.desc ? ` ${nearest.desc}` : '';
   const mark = nearest.isCustom ? '★ ' : '';
-  main.textContent = `${mark}${nearest.label}${descPart}  ${r.hms}`;
-  main.style.color = colorOf(r.sec);
+  main.innerHTML =
+    `${escHtml(mark + nearest.label + descPart)}  ` +
+    `<span style="color:${colorOf(r.sec)}">${escHtml(r.hms)}</span>`;
+  main.style.color = ''; // 既定色（ラベル/説明は中立）
   // サブ: 2件目があれば表示
   const sub = document.getElementById('countdown-sub');
   if (countdownTargets.length > 1) {
@@ -1008,8 +1021,10 @@ function updateCountdown() {
     const nr    = fmtRemain(next.time);
     const nDesc = next.desc ? ` ${next.desc}` : '';
     const nMark = next.isCustom ? '★ ' : '';
-    sub.textContent = `次: ${nMark}${next.label}${nDesc}  ${nr.hms}`;
-    sub.style.color = colorOf(nr.sec);
+    sub.innerHTML =
+      `${escHtml(nMark + next.label + nDesc)}  ` +
+      `<span style="color:${colorOf(nr.sec)}">${escHtml(nr.hms)}</span>`;
+    sub.style.color = '';
   } else {
     sub.textContent = '';
   }
