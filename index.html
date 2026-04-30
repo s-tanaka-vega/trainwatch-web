@@ -59,6 +59,7 @@
       font-weight: 900;
       padding: 10px 16px 2px;
       letter-spacing: 0.04em;
+      color: #B0B0B0;
     }
 
     /* 紫ライン */
@@ -233,7 +234,7 @@
   </div>
   <div id="countdown-panel" style="flex:1;display:none">
     <div id="countdown-main" style="font-size:1.6rem;font-weight:700;color:#FBBC04;line-height:1.2"></div>
-    <div id="countdown-sub"  style="font-size:0.85rem;color:#888;margin-top:4px"></div>
+    <div id="countdown-sub"  style="font-size:1.15rem;font-weight:600;color:#888;margin-top:6px"></div>
   </div>
 </div>
 
@@ -241,6 +242,8 @@
   <a href="https://tenki.jp/forecast/3/17/4620/14211/1hour.html" target="_blank">秦野天気</a>
   <span class="weather-link-sep">/</span>
   <a href="https://transit.yahoo.co.jp/traininfo/area/4/" target="_blank">関東広域電車情報</a>
+  <span class="weather-link-sep">/</span>
+  <a href="javascript:void(0)" id="cd-toggle-btn" onclick="toggleCountdownMode()">カウントダウン</a>
   <span class="weather-link-sep">/</span>
   <a href="javascript:void(0)" id="countdown-btn" onclick="toggleCustomCountdown()">任意時刻</a>
 </div>
@@ -831,6 +834,7 @@ function updateClock() {
 // ============================================================
 const COUNTDOWN_MAX = 2;
 let countdownTargets = []; // { label: 'HH:MM', desc, time: Date }
+let countdownMode    = false; // false=天気表示 / true=カウントダウン表示
 
 // 自動カウントダウンの定型スケジュール (HH:MM 順)
 const COUNTDOWN_SCHEDULE = [
@@ -885,6 +889,21 @@ function refreshCountdownButton() {
   const btn = document.getElementById('countdown-btn');
   const custom = countdownTargets.find(t => t.isCustom);
   btn.textContent = custom ? `任意: ${custom.label}` : '任意時刻';
+  const tBtn = document.getElementById('cd-toggle-btn');
+  if (tBtn) tBtn.textContent = countdownMode ? '天気に戻す' : 'カウントダウン';
+}
+
+function toggleCountdownMode() {
+  countdownMode = !countdownMode;
+  if (countdownMode) {
+    refillFromSchedule();
+    setCountdownActive(true);
+    updateCountdown();
+  } else {
+    countdownTargets = [];
+    setCountdownActive(false);
+  }
+  refreshCountdownButton();
 }
 
 function parseTargetTime(input) {
@@ -920,6 +939,11 @@ function toggleCustomCountdown() {
     if (!t) { alert('形式が違います: HH:MM 説明'); return; }
     t.isCustom = true;
     countdownTargets.push(t);
+    // カウントダウンモードに自動移行
+    if (!countdownMode) {
+      countdownMode = true;
+      refillFromSchedule();
+    }
     // 上限超過時は自動枠の最遠を退避
     if (countdownTargets.length > COUNTDOWN_MAX) {
       let farIdx = -1, farTime = -Infinity;
@@ -929,7 +953,7 @@ function toggleCustomCountdown() {
       if (farIdx >= 0) countdownTargets.splice(farIdx, 1);
     }
   }
-  setCountdownActive(true);
+  if (countdownTargets.length > 0) setCountdownActive(true);
   refreshCountdownButton();
   updateCountdown();
 }
@@ -937,6 +961,7 @@ function toggleCustomCountdown() {
 const COUNTDOWN_GRACE_MS = 60 * 1000; // 期限後の表示維持時間
 
 function updateCountdown() {
+  if (!countdownMode) return; // 天気表示モード中は何もしない
   const now = new Date();
   // 期限超過から1分以上経過したものは削除
   countdownTargets = countdownTargets.filter(t => now - t.time < COUNTDOWN_GRACE_MS);
@@ -961,18 +986,20 @@ function updateCountdown() {
     return { sec: s, hms: hh > 0 ? `${hh}:${pad(mm)}:${pad(ss)}` : `${mm}:${pad(ss)}` };
   };
   const colorOf = s => {
-    if (s <=  60) return '#EA4335'; // 期限後/1分以下: 赤
-    if (s <= 120) return '#FF6D01'; // 2分以下: オレンジ
-    if (s <= 300) return '#F9A825'; // 5分以下: 濃いめの黄
-    if (s <= 600) return '#AB47BC'; // 10分以下: 紫
-    return '#BDBDBD';               // それ以上: 薄めの白(灰)
+    if (s <=   60) return '#EA4335'; // 1分以下: 赤
+    if (s <=  120) return '#FF6D01'; // 2分以下: オレンジ
+    if (s <=  300) return '#F9A825'; // 5分以下: 濃いめの黄
+    if (s <=  600) return '#4FC3F7'; // 10分以下: 水色
+    if (s <= 1800) return '#1E88E5'; // 30分以下: 濃い青
+    if (s <= 3600) return '#AB47BC'; // 60分以下: 紫
+    return '#388E3C';                // 60分超: 濃いめ緑
   };
   const nearest = countdownTargets[0];
   const r = fmtRemain(nearest.time);
   const main = document.getElementById('countdown-main');
   const descPart = nearest.desc ? ` ${nearest.desc}` : '';
   const mark = nearest.isCustom ? '★ ' : '';
-  main.textContent = `${mark}${nearest.label}${descPart}  あと ${r.hms}`;
+  main.textContent = `${mark}${nearest.label}${descPart}  ${r.hms}`;
   main.style.color = colorOf(r.sec);
   // サブ: 2件目があれば表示
   const sub = document.getElementById('countdown-sub');
@@ -981,7 +1008,7 @@ function updateCountdown() {
     const nr    = fmtRemain(next.time);
     const nDesc = next.desc ? ` ${next.desc}` : '';
     const nMark = next.isCustom ? '★ ' : '';
-    sub.textContent = `次: ${nMark}${next.label}${nDesc}  あと ${nr.hms}`;
+    sub.textContent = `次: ${nMark}${next.label}${nDesc}  ${nr.hms}`;
     sub.style.color = colorOf(nr.sec);
   } else {
     sub.textContent = '';
@@ -993,11 +1020,7 @@ function updateCountdown() {
 // ============================================================
 updateClock();
 setInterval(updateClock, 1000);
-// 自動スケジュールでカウントダウン開始
-refillFromSchedule();
-setCountdownActive(true);
 refreshCountdownButton();
-updateCountdown();
 setInterval(updateCountdown, 1000);
 
 // バッテリー
