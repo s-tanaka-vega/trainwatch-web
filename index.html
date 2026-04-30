@@ -400,6 +400,11 @@ async function fetchWeather() {
         labelColor:  loc.color,
         elemId:      loc.elemId,
         tomorrowElemId: loc.elemId.replace('-row', '-tomorrow-row'),
+        // 傘判定用: 今日24h最大（明日と同基準）
+        umbrellaToday: {
+          code:       daily.weather_code[0],
+          precipProb: daily.precipitation_probability_max[0] ?? 0,
+        },
         tomorrow: {
           icon:        wmoIcon(daily.weather_code[1]),
           tempMax:     Math.round(daily.temperature_2m_max[1]),
@@ -438,7 +443,11 @@ function renderWeather() {
   const m = weatherCache.minamiMachida;
 
   // 傘アラート：今日・明日を個別判定して / で表示、高い方優先
-  const todayLevel    = Math.max(umbrellaLevel(h), umbrellaLevel(m));
+  // 今日は24時間最大の確率/コードで判定（明日と同基準）
+  const todayLevel    = Math.max(
+    umbrellaLevel(h?.umbrellaToday),
+    umbrellaLevel(m?.umbrellaToday)
+  );
   const tomorrowLevel = Math.max(
     h?.tomorrow ? umbrellaLevel(h.tomorrow) : 0,
     m?.tomorrow ? umbrellaLevel(m.tomorrow) : 0
@@ -734,7 +743,7 @@ async function refresh() {
 
   const items = [
     { line:'広域', rank:wRank, rankColor:wColor, desc:wDesc,
-      delayScore:0, crowdScore:0, headlines:wideRows, isWide:true, rankSummary },
+      delayScore:0, crowdScore:0, headlines:wideRows, isWide:true, rankSummary, wideCount: count },
     ...lineItems
   ];
 
@@ -781,13 +790,18 @@ function renderCards(items) {
     // 広域カードのランクサマリーは外部の #rank-summary-row へ移動
     if (st.isWide) {
       const rankRow = document.getElementById('rank-summary-row');
+      const sep = '<span style="color:#555"> / </span>';
+      const parts = [];
       if (st.rankSummary && st.rankSummary.length > 0) {
-        rankRow.innerHTML = st.rankSummary
+        parts.push(st.rankSummary
           .map(r => `<span style="color:${r.color}">${escHtml(r.rank)}</span>`)
-          .join('<span style="color:#555"> / </span>');
-      } else {
-        rankRow.innerHTML = '';
+          .join(sep));
       }
+      // 関東広域の遅延路線数を末尾に色付きで追加
+      const c = st.wideCount;
+      const countText = c === 0 ? '−' : String(c);
+      parts.push(`<span style="color:${st.rankColor}">${countText}</span>`);
+      rankRow.innerHTML = parts.join(sep);
     }
 
     if (st.headlines.length > 0) {
