@@ -885,6 +885,7 @@ function refillFromSchedule() {
 function setCountdownActive(on) {
   document.getElementById('weather-panel').style.display    = on ? 'none' : '';
   document.getElementById('countdown-panel').style.display  = on ? '' : 'none';
+  document.getElementById('fetch-status').style.display     = on ? 'none' : '';
 }
 
 function refreshCountdownButton() {
