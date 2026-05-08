@@ -72,19 +72,28 @@
 
     /* ステータス + 天気バー */
     #status-bar {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
       padding: 4px 16px 8px;
     }
     #fetch-status {
       font-size: 0.72rem;
       color: #26C6DA;
-      padding-top: 4px;
       white-space: nowrap;
       min-width: 28px;
+      flex-shrink: 0;
     }
-    #weather-panel { flex: 1; }
+    #weather-panel { width: 100%; }
+    #rank-summary-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 2px 16px 4px;
+    }
+    #rank-summary-row {
+      flex: 1;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
     #umbrella-row {
       font-size: 1.2rem;
       font-weight: 600;
@@ -226,7 +235,6 @@
 </div>
 
 <div id="status-bar">
-  <span id="fetch-status">未取得</span>
   <div id="weather-panel">
     <div id="umbrella-row"></div>
     <div id="hadano-row" class="weather-row"></div>
@@ -239,7 +247,10 @@
   </div>
 </div>
 
-<div id="rank-summary-row" style="padding:2px 16px 4px;font-size:1rem;font-weight:700;letter-spacing:0.04em"></div>
+<div id="rank-summary-bar">
+  <span id="fetch-status">未取得</span>
+  <span id="rank-summary-row"></span>
+</div>
 
 <div id="weather-links">
   <a href="https://tenki.jp/forecast/3/17/4620/14211/1hour.html" target="_blank">秦野天気</a>
@@ -928,7 +939,6 @@ function applyDisplayMode(mode) {
   const showCountdown = (mode === 'countdown' || mode === 'both');
   document.getElementById('weather-panel').style.display    = showWeather   ? '' : 'none';
   document.getElementById('countdown-panel').style.display  = showCountdown ? '' : 'none';
-  document.getElementById('fetch-status').style.display     = showWeather   ? '' : 'none';
   document.getElementById('custom-cd-wrap').style.display   = showCountdown ? '' : 'none';
   if (showCountdown) {
     refillFromSchedule();
