@@ -360,7 +360,8 @@ function isRainy(c) {
   return (c>=51&&c<=65)||(c>=80&&c<=82)||(c>=95&&c<=99);
 }
 function tempColor(t, c) {
-  if (isRainy(c))  return '#4FC3F7';
+  if (t>=38)       return '#880E4F';
+  if (t>=33)       return '#C62828';
   if (t>=28)       return '#FF5722';
   if (t>=22)       return '#FF8A65';
   if (t>=16)       return '#FFD54F';
