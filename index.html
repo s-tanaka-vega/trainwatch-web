@@ -1503,10 +1503,13 @@ function renderTrackerList(keepScroll) {
   el.scrollTop = savedScroll;
 }
 
-// 路線ランクが A 以外なら遅延扱い。個々の列車の遅れは見ない
+// 路線ランクが B 以上（B/C/D/E）なら遅延扱い。個々の列車の遅れは見ない
+// A- は混雑スコアだけで付くことがあり「!」がうるさいので対象外
+const TRACKER_QUIET_RANKS = new Set(['A', 'A-', '-']);
+
 function trackerDelayInfo(lineName) {
   const info = lineRankMap[lineName];
-  if (!info || info.rank === 'A' || info.rank === '-') return null;
+  if (!info || TRACKER_QUIET_RANKS.has(info.rank)) return null;
   return info;
 }
 
