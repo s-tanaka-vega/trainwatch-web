@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8"><title>tracker selftest</title>
+<style>body{font-family:monospace;background:#111;color:#ddd;padding:16px}
+.p{color:#4caf50}.f{color:#f44336;font-weight:700}</style></head><body>
+<div id="out"></div>
+<script>
+// index.html から検証対象の純粋関数だけをコピーする。
+// 実装を変えたらこちらも同じ内容に更新すること。
+const TT_HOLIDAYS = new Set(['2026-01-01','2026-05-05']);
+
+function trackerNowMin(now) {
+  const m = now.getHours() * 60 + now.getMinutes();
+  return m < 120 ? m + 1440 : m;
+}
+
+// 0:00〜1:59 は前日のダイヤを使う
+function trackerDiaKind(now) {
+  const d = new Date(now);
+  if (d.getHours() < 2) d.setDate(d.getDate() - 1);
+  const pad = n => String(n).padStart(2, '0');
+  const key = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  if (typeof TT_HOLIDAYS !== 'undefined' && TT_HOLIDAYS.has(key)) return 'ho';
+  const w = d.getDay();
+  return (w === 0 || w === 6) ? 'ho' : 'wd';
+}
+
+// 直前に出た1本＋次の9本
+function pickTrains(rows, nowMin) {
+  let nextIdx = rows.findIndex(r => r[0] >= nowMin);
+  if (nextIdx < 0) nextIdx = rows.length;
+  const start = Math.max(0, nextIdx - 1);
+  return { list: rows.slice(start, start + 10), nextIdx: nextIdx - start };
+}
+
+function fmtHHMM(min) {
+  const pad = n => String(n).padStart(2, '0');
+  return `${pad(Math.floor(min / 60) % 24)}:${pad(min % 60)}`;
+}
+
+// ---- テスト ----
+const results = [];
+function eq(name, got, want) {
+  const ok = JSON.stringify(got) === JSON.stringify(want);
+  results.push({ name, ok, got, want });
+}
+
+eq('nowMin 昼', trackerNowMin(new Date(2026,6,31,8,13)), 493);
+eq('nowMin 0時台は+1440', trackerNowMin(new Date(2026,6,31,0,14)), 1454);
+eq('nowMin 1:59は+1440', trackerNowMin(new Date(2026,6,31,1,59)), 1559);
+eq('nowMin 2:00はそのまま', trackerNowMin(new Date(2026,6,31,2,0)), 120);
+
+eq('平日金曜', trackerDiaKind(new Date(2026,6,31,8,0)), 'wd');
+eq('土曜', trackerDiaKind(new Date(2026,7,1,8,0)), 'ho');
+eq('日曜', trackerDiaKind(new Date(2026,7,2,8,0)), 'ho');
+eq('祝日リスト該当', trackerDiaKind(new Date(2026,4,5,8,0)), 'ho');
+eq('土曜0:30は前日金曜=wd', trackerDiaKind(new Date(2026,7,1,0,30)), 'wd');
+eq('日曜0:30は前日土曜=ho', trackerDiaKind(new Date(2026,7,2,0,30)), 'ho');
+
+const rows = [[480,0,0,500],[490,1,0,505],[500,0,0,520],[510,1,0,530],
+              [520,0,0,540],[530,1,0,550],[540,0,0,560],[550,1,0,570],
+              [560,0,0,580],[570,1,0,590],[580,0,0,600],[590,1,0,610]];
+let r = pickTrains(rows, 495);
+eq('直前1本を含む', r.list[0][0], 490);
+eq('次発の位置', r.nextIdx, 1);
+eq('10件', r.list.length, 10);
+r = pickTrains(rows, 470);
+eq('始発前は先頭から', r.list[0][0], 480);
+eq('始発前の次発位置', r.nextIdx, 0);
+r = pickTrains(rows, 600);
+eq('終電後は末尾のみ', r.list.length, 1);
+eq('終電後の次発位置は範囲外', r.nextIdx, 1);
+r = pickTrains(rows, 590);
+eq('最終列車が次発', r.list[r.nextIdx][0], 590);
+
+eq('fmt 通常', fmtHHMM(493), '08:13');
+eq('fmt 0時台', fmtHHMM(1454), '00:14');
+eq('fmt 24時ちょうど', fmtHHMM(1440), '00:00');
+
+const pass = results.filter(x => x.ok).length;
+document.getElementById('out').innerHTML =
+  `<h2>${pass} / ${results.length} PASS</h2>` +
+  results.map(x => x.ok
+    ? `<div class="p">PASS ${x.name}</div>`
+    : `<div class="f">FAIL ${x.name}: got ${JSON.stringify(x.got)} want ${JSON.stringify(x.want)}</div>`
+  ).join('');
+</script></body></html>
