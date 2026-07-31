@@ -237,6 +237,12 @@
       border-color: #26C6DA;
       color: #26C6DA;
     }
+    #tracker-head {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
     #tracker-body { display: none; margin-top: 8px; }
     #tracker-body.on { display: block; }
     #tracker-dir {
@@ -244,7 +250,6 @@
       gap: 18px;
       font-size: 0.95rem;
       font-weight: 700;
-      margin-bottom: 6px;
     }
     .tracker-dir-btn {
       background: none;
@@ -296,18 +301,27 @@
     .tracker-row.past { opacity: 0.4; }
     .tracker-row.next { font-weight: 700; }
     .tr-mark { width: 0.9em; flex-shrink: 0; color: #26C6DA; }
-    .tr-dep  { width: 3.4em; flex-shrink: 0; }
+    .tr-dep  {
+      width: 3.1em;          /* 自身の font-size 基準。"12:34" が入る幅 */
+      flex-shrink: 0;
+      font-size: 1.2em;
+      line-height: 1;        /* 行高を base の line-height に合わせる */
+      font-variant-numeric: tabular-nums;
+    }
     .tr-bang { width: 0.7em; flex-shrink: 0; color: #EA4335; font-weight: 700; }
-    .tr-type { width: 2.6em; flex-shrink: 0; }
-    .tr-dest { width: 4.0em; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; }
-    .tr-arr  { flex: 1; color: #9e9e9e; overflow: hidden; text-overflow: ellipsis; }
+    .tr-type { width: 2.4em; flex-shrink: 0; }
+    .tr-dest { width: 1.3em; flex-shrink: 0; overflow: hidden; }
+    .tr-arr  { flex: 1; min-width: 0; color: #9e9e9e; overflow: hidden; text-overflow: ellipsis; }
     .tr-left {
-      width: 5.4em;
+      width: 3.7em;          /* 最大表示 "1:12:34" が収まる幅（スマホ幅対策） */
       flex-shrink: 0;
       text-align: right;
-      font-size: 1.28em;
+      font-size: 1.65em;
+      line-height: 1;
       font-weight: 700;
       letter-spacing: 0.02em;
+      font-variant-numeric: tabular-nums;
+      overflow: hidden;
     }
     #tracker-empty { color: #666; font-size: 0.86rem; padding: 6px 0; }
     .tr-unreachable { color: #666; }
@@ -364,9 +378,11 @@
 </div>
 
 <div id="tracker-wrap">
-  <button id="tracker-toggle" onclick="toggleTracker()">追跡 OFF</button>
-  <div id="tracker-body">
+  <div id="tracker-head">
+    <button id="tracker-toggle" onclick="toggleTracker()">追跡 OFF</button>
     <div id="tracker-dir"></div>
+  </div>
+  <div id="tracker-body">
     <div id="tracker-stations"></div>
     <div id="tracker-list"></div>
   </div>
@@ -1281,6 +1297,21 @@ const TRACKER_TYPE_CLASS = {
   '準急': 'tr-ty-semi',  '区急': 'tr-ty-semi',
 };
 
+// 行き先は漢字1文字表示。未登録の駅名は先頭1文字にフォールバックする
+const TT_DEST_ABBR = {
+  '新宿':'新', '相模大野':'相', '本厚木':'厚', '町田':'町', '片瀬江ノ島':'江',
+  '藤沢':'藤', '大和(神奈川県)':'和', '渋谷':'渋', '押上':'押', '東武動物公園':'東',
+  '清澄白河':'清', '北越谷':'北', '南栗橋':'栗', '久喜':'久', '鷺沼':'鷺',
+  '大井町':'大', '長津田':'長', '二子玉川':'二', '永田町':'永', '青山一丁目':'青',
+  '中央林間':'中', '伊勢原':'伊', '小田原':'小', '新松田':'松', '御殿場':'御',
+  '秦野':'秦', '箱根湯本':'箱', '海老名(相鉄・小田急)':'海',
+};
+
+function destAbbr(name) {
+  if (!name) return '';
+  return TT_DEST_ABBR[name] || Array.from(name)[0];
+}
+
 let trackerOn      = false;
 let trackerDir     = 'go';
 let trackerBoardId = 'G1';
@@ -1321,9 +1352,11 @@ function renderTrackerControls() {
   btn.textContent = trackerOn ? '追跡 ON' : '追跡 OFF';
   btn.className   = trackerOn ? 'on' : '';
   document.getElementById('tracker-body').className = trackerOn ? 'on' : '';
-  if (!trackerOn) return;
 
+  // 方向ボタンは追跡ボタンと同じ行にあるので、OFF 時は自前で消す
   const dirEl = document.getElementById('tracker-dir');
+  if (!trackerOn) { dirEl.innerHTML = ''; return; }
+
   dirEl.innerHTML =
     `<button class="tracker-dir-btn${trackerDir==='go'?' sel':''}" ` +
     `onclick="setTrackerDir('go')">△行き</button>` +
@@ -1432,7 +1465,7 @@ function renderTrackerList(keepScroll) {
       `<span class="tr-dep">${fmtHHMM(r[0])}</span>` +
       `<span class="tr-bang">${delay ? '!' : ''}</span>` +
       `<span class="${tyCls}">${escHtml(tyName)}</span>` +
-      `<span class="${destCls}">${escHtml(TT_DESTS[r[2]] || '')}</span>` +
+      `<span class="${destCls}">${escHtml(destAbbr(TT_DESTS[r[2]]))}</span>` +
       `<span class="${arrCls}">${arr}</span>` +
       `<span class="tr-left"${leftSty}>${left}</span>` +
       `</div>`;
