@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>TrainWatcher</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@900&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -300,23 +301,25 @@
     }
     .tracker-row.past { opacity: 0.4; }
     .tracker-row.next { font-weight: 700; }
-    .tr-mark { width: 0.9em; flex-shrink: 0; color: #26C6DA; }
+    /* 発車時刻と残り時間は同サイズ。360px 幅で着時刻が省略されない上限が 1.6em */
+    .tr-mark { width: 0.85em; flex-shrink: 0; color: #26C6DA; }
     .tr-dep  {
-      width: 3.1em;          /* 自身の font-size 基準。"12:34" が入る幅 */
+      width: 2.85em;         /* 自身の font-size 基準。"12:34" が入る幅 */
       flex-shrink: 0;
-      font-size: 1.2em;
+      font-size: 1.6em;
       line-height: 1;        /* 行高を base の line-height に合わせる */
       font-variant-numeric: tabular-nums;
     }
-    .tr-bang { width: 0.7em; flex-shrink: 0; color: #EA4335; font-weight: 700; }
-    .tr-type { width: 2.4em; flex-shrink: 0; }
-    .tr-dest { width: 1.3em; flex-shrink: 0; overflow: hidden; }
+    /* 種別（常に2文字）の直後に ! が付くよう幅を詰める → 「各停!」 */
+    .tr-type { width: 2.1em; flex-shrink: 0; }
+    .tr-bang { width: 0.75em; flex-shrink: 0; color: #EA4335; font-weight: 700; }
+    .tr-dest { width: 4.0em; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; }
     .tr-arr  { flex: 1; min-width: 0; color: #9e9e9e; overflow: hidden; text-overflow: ellipsis; }
     .tr-left {
-      width: 3.7em;          /* 最大表示 "1:12:34" が収まる幅（スマホ幅対策） */
+      width: 3.75em;         /* 最大表示 "1:12:34" が収まる幅（スマホ幅対策） */
       flex-shrink: 0;
       text-align: right;
-      font-size: 1.65em;
+      font-size: 1.6em;      /* .tr-dep と同サイズ */
       line-height: 1;
       font-weight: 700;
       letter-spacing: 0.02em;
@@ -440,7 +443,7 @@ const LOCATIONS = [
 // ユーティリティ
 // ============================================================
 function escHtml(str) {
-  return str
+  return String(str ?? '')
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -450,9 +453,32 @@ function nodeText(el) {
     .replace(/\s+/g,' ').trim();
 }
 
+// タイムアウト付き fetch。指定 ms で中断して throw する
+const FETCH_TIMEOUT_MS = 8000;
+
+async function fetchWithTimeout(url, opts = {}, timeoutMs = FETCH_TIMEOUT_MS) {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...opts, signal: ac.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Worker が詰まる/一時的に落ちるケースがあるので1回だけリトライする
 async function fetchViaProxy(url) {
-  const res = await fetch(PROXY_BASE + encodeURIComponent(url), { cache: 'no-store' });
-  return await res.text();
+  const target = PROXY_BASE + encodeURIComponent(url);
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetchWithTimeout(target, { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return await res.text();
+    } catch(e) {
+      if (attempt === 1) throw e;
+      console.warn('proxy retry', url, e);
+    }
+  }
 }
 
 // ============================================================
@@ -521,7 +547,7 @@ async function fetchWeather() {
         `&current=temperature_2m,weather_code,precipitation_probability` +
         `&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max` +
         `&timezone=Asia%2FTokyo`;
-      const res   = await fetch(url);
+      const res   = await fetchWithTimeout(url);
       const json  = await res.json();
       const cur   = json.current;
       const daily = json.daily;
@@ -833,7 +859,19 @@ async function refresh() {
   isLoading = true;
   setFetchStatus('更新中', '#FBBC04');
   setRefreshLoading(true);
+  try {
+    await refreshInner();
+  } catch(e) {
+    console.warn('refresh', e);
+    setFetchStatus('NG', '#EA4335');
+  } finally {
+    // 途中で例外が出ても ↺ を復活させる
+    isLoading = false;
+    setRefreshLoading(false);
+  }
+}
 
+async function refreshInner() {
   const official = await fetchOfficialStatus();
 
   // 広域情報
@@ -855,18 +893,18 @@ async function refresh() {
   let wideRows        = sortedEntries.map(([n,s]) => `【${n}】${s}`);
   if (!wideRows.length) wideRows = ['現在、関東他路線に目立った遅延はありません'];
 
-  // 非広域路線を先に処理してランクを収集
-  const lineItems = [];
-  for (const line of TARGET_LINES) {
-    if (line === '広域') continue;
-    const rt     = await fetchLineDetail(line);
+  // 非広域路線を先に処理してランクを収集。詳細ページは並列取得（順序は TARGET_LINES 通り）
+  const detailLines = TARGET_LINES.filter(line => line !== '広域');
+  const details     = await Promise.all(detailLines.map(line => fetchLineDetail(line)));
+  const lineItems   = detailLines.map((line, i) => {
+    const rt     = details[i];
     const stFull = officialStatusForLine(line, official);
     const ri     = calculateRank(rt.delayScore, rt.crowdScore, stFull, rt.delayMin, rt.hasStrong);
-    lineItems.push({ line, rank:ri.rank, rankColor:ri.color, desc:ri.desc,
-                     delayScore:rt.delayScore, crowdScore:rt.crowdScore,
-                     delayMin:rt.delayMin,
-                     headlines:rt.headlines.slice(0,2), isWide:false });
-  }
+    return { line, rank:ri.rank, rankColor:ri.color, desc:ri.desc,
+             delayScore:rt.delayScore, crowdScore:rt.crowdScore,
+             delayMin:rt.delayMin,
+             headlines:rt.headlines.slice(0,2), isWide:false };
+  });
 
   lineRankMap = Object.fromEntries(lineItems.map(it => [it.line, { rank: it.rank, color: it.rankColor }]));
   // 東急田園都市線以降のランクサマリー
@@ -895,8 +933,6 @@ async function refresh() {
 
   renderCards(items);
   setFetchStatus(items.length === 0 ? 'NG' : 'OK', '#26C6DA');
-  isLoading = false;
-  setRefreshLoading(false);
 }
 
 function renderCards(items) {
@@ -989,8 +1025,7 @@ function setRefreshLoading(on) {
 }
 
 function manualRefresh() {
-  fetchWeather();
-  refresh();
+  autoFetch();   // 自動更新と同じ経路。復帰直後の二重取得も防げる
 }
 
 // ============================================================
@@ -1297,19 +1332,9 @@ const TRACKER_TYPE_CLASS = {
   '準急': 'tr-ty-semi',  '区急': 'tr-ty-semi',
 };
 
-// 行き先は漢字1文字表示。未登録の駅名は先頭1文字にフォールバックする
-const TT_DEST_ABBR = {
-  '新宿':'新', '相模大野':'相', '本厚木':'厚', '町田':'町', '片瀬江ノ島':'江',
-  '藤沢':'藤', '大和(神奈川県)':'和', '渋谷':'渋', '押上':'押', '東武動物公園':'東',
-  '清澄白河':'清', '北越谷':'北', '南栗橋':'栗', '久喜':'久', '鷺沼':'鷺',
-  '大井町':'大', '長津田':'長', '二子玉川':'二', '永田町':'永', '青山一丁目':'青',
-  '中央林間':'中', '伊勢原':'伊', '小田原':'小', '新松田':'松', '御殿場':'御',
-  '秦野':'秦', '箱根湯本':'箱', '海老名(相鉄・小田急)':'海',
-};
-
-function destAbbr(name) {
-  if (!name) return '';
-  return TT_DEST_ABBR[name] || Array.from(name)[0];
+// 到着駅ラベル（arrLabel）は漢字1文字に詰める。大野→大 / 林間→林 / 終着→終 / 秦野→秦
+function arrAbbr(label) {
+  return Array.from(label || '')[0] || '';
 }
 
 let trackerOn      = false;
@@ -1450,7 +1475,7 @@ function renderTrackerList(keepScroll) {
     const cls    = 'tracker-row' + (isPast ? ' past' : '') + (isNext ? ' next' : '');
     const color  = delay ? ` style="color:${delay.color}"` : '';
     const unreachable = r[3] < 0;
-    const arr    = unreachable ? '不可' : `${escHtml(board.arrLabel)} ${fmtHHMM(r[3])}`;
+    const arr    = unreachable ? '不可' : `${escHtml(arrAbbr(board.arrLabel))} ${fmtHHMM(r[3])}`;
     const destCls = 'tr-dest' + (unreachable ? ' tr-unreachable' : '');
     const arrCls  = 'tr-arr' + (unreachable ? ' tr-unreachable' : '');
     // 残り時間は次発とその次の2件まで出す
@@ -1463,9 +1488,9 @@ function renderTrackerList(keepScroll) {
     return `<div class="${cls}"${color}>` +
       `<span class="tr-mark">${isNext ? '▶' : ''}</span>` +
       `<span class="tr-dep">${fmtHHMM(r[0])}</span>` +
-      `<span class="tr-bang">${delay ? '!' : ''}</span>` +
       `<span class="${tyCls}">${escHtml(tyName)}</span>` +
-      `<span class="${destCls}">${escHtml(destAbbr(TT_DESTS[r[2]]))}</span>` +
+      `<span class="tr-bang">${delay ? '!' : ''}</span>` +
+      `<span class="${destCls}">${escHtml(TT_DESTS[r[2]] || '')}</span>` +
       `<span class="${arrCls}">${arr}</span>` +
       `<span class="tr-left"${leftSty}>${left}</span>` +
       `</div>`;
@@ -1488,10 +1513,14 @@ function trackerDelayInfo(lineName) {
 // ============================================================
 // 起動
 // ============================================================
+// 1秒ごとの再描画は1本のタイマーに集約（タイマー間のズレ防止）
+function tick() {
+  updateClock();
+  updateCountdown();
+  if (trackerOn && displayMode === 'both') renderTrackerList(true);
+}
+
 updateClock();
-setInterval(updateClock, 1000);
-setInterval(updateCountdown, 1000);
-setInterval(() => { if (trackerOn && displayMode === 'both') renderTrackerList(true); }, 1000);
 
 // 前回モードの復元（無ければ天気）
 let initialMode = 'weather';
@@ -1518,11 +1547,28 @@ initTracker();
   } catch(e) { /* 取れない時は -- のまま */ }
 })();
 
-fetchWeather();
-refresh();
+setInterval(tick, 1000);
 
-setInterval(fetchWeather, 5 * 60 * 1000);
-setInterval(refresh,      5 * 60 * 1000);
+// ---- 自動更新 ----
+// 非表示中（別アプリ/スリープ）は取得をスキップし、復帰時にまとめて取り直す
+const AUTO_REFRESH_MS = 5 * 60 * 1000;
+const RESUME_STALE_MS = 60 * 1000;   // 復帰時、これより古ければ即再取得
+let lastAutoFetch = 0;
+
+function autoFetch() {
+  lastAutoFetch = Date.now();
+  fetchWeather();
+  refresh();
+}
+
+autoFetch();
+setInterval(() => { if (!document.hidden) autoFetch(); }, AUTO_REFRESH_MS);
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  tick();   // スリープ復帰直後の時計・カウントダウンのズレを即補正
+  if (Date.now() - lastAutoFetch >= RESUME_STALE_MS) autoFetch();
+});
 </script>
 </body>
 </html>
