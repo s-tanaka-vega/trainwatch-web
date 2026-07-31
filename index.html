@@ -303,6 +303,7 @@
     .tr-arr  { flex: 1; color: #9e9e9e; overflow: hidden; text-overflow: ellipsis; }
     .tr-left { width: 3.6em; flex-shrink: 0; text-align: right; }
     #tracker-empty { color: #666; font-size: 0.8rem; padding: 6px 0; }
+    .tr-unreachable { color: #666; }
   </style>
 </head>
 <body>
@@ -1392,15 +1393,18 @@ function renderTrackerList(keepScroll) {
     const isPast = (i < picked.nextIdx);
     const cls    = 'tracker-row' + (isPast ? ' past' : '') + (isNext ? ' next' : '');
     const color  = delay ? ` style="color:${delay.color}"` : '';
-    const arr    = r[3] >= 0 ? `${escHtml(board.arrLabel)} ${fmtHHMM(r[3])}` : '';
+    const unreachable = r[3] < 0;
+    const arr    = unreachable ? '不可' : `${escHtml(board.arrLabel)} ${fmtHHMM(r[3])}`;
+    const destCls = 'tr-dest' + (unreachable ? ' tr-unreachable' : '');
+    const arrCls  = 'tr-arr' + (unreachable ? ' tr-unreachable' : '');
     const left   = isNext ? fmtRemainSec(nowSecOf(r[0])) : '';
     return `<div class="${cls}"${color}>` +
       `<span class="tr-mark">${isNext ? '▶' : ''}</span>` +
       `<span class="tr-dep">${fmtHHMM(r[0])}</span>` +
       `<span class="tr-bang">${delay ? '!' : ''}</span>` +
       `<span class="tr-type">${escHtml(TT_TYPES[r[1]] || '')}</span>` +
-      `<span class="tr-dest">${escHtml(TT_DESTS[r[2]] || '')}</span>` +
-      `<span class="tr-arr">${arr}</span>` +
+      `<span class="${destCls}">${escHtml(TT_DESTS[r[2]] || '')}</span>` +
+      `<span class="${arrCls}">${arr}</span>` +
       `<span class="tr-left">${left}</span>` +
       `</div>`;
   }).join('');
