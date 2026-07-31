@@ -295,13 +295,20 @@
     }
     .tracker-row.past { opacity: 0.4; }
     .tracker-row.next { font-weight: 700; }
-    .tr-mark { width: 1em; flex-shrink: 0; color: #26C6DA; }
+    .tr-mark { width: 0.9em; flex-shrink: 0; color: #26C6DA; }
     .tr-dep  { width: 3.4em; flex-shrink: 0; }
     .tr-bang { width: 0.8em; flex-shrink: 0; color: #EA4335; font-weight: 700; }
     .tr-type { width: 2.6em; flex-shrink: 0; }
-    .tr-dest { width: 4.5em; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; }
+    .tr-dest { width: 4.2em; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; }
     .tr-arr  { flex: 1; color: #9e9e9e; overflow: hidden; text-overflow: ellipsis; }
-    .tr-left { width: 4.2em; flex-shrink: 0; text-align: right; }
+    .tr-left {
+      width: 5.4em;
+      flex-shrink: 0;
+      text-align: right;
+      font-size: 1.28em;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
     #tracker-empty { color: #666; font-size: 0.86rem; padding: 6px 0; }
     .tr-unreachable { color: #666; }
     .tr-ty-rapid { color: #FF6D01; }
@@ -1134,6 +1141,21 @@ function toggleCustomCountdown() {
 
 const COUNTDOWN_GRACE_MS = 60 * 1000; // 期限後の表示維持時間
 
+// 残り秒数に応じた色。カウントダウンと追跡パネルで共用する
+const colorOf = s => {
+  if (s <=     0) return '#EC407A'; // 期限超過 (0:00 維持中): ピンク
+  if (s <=    60) return '#EA4335'; // 1分以下: 赤
+  if (s <=   120) return '#FF6D01'; // 2分以下: オレンジ
+  if (s <=   300) return '#F9A825'; // 5分以下: 濃いめの黄
+  if (s <=   600) return '#4FC3F7'; // 10分以下: 水色
+  if (s <=  1800) return '#1E88E5'; // 30分以下: 濃い青
+  if (s <=  3600) return '#AB47BC'; // 60分以下: 紫
+  if (s <=  7200) return '#66BB6A'; // 60〜120分: 明るめ緑
+  if (s <= 10800) return '#388E3C'; // 120〜180分: 濃いめ緑
+  if (s <= 43200) return '#546E7A'; // 180分〜12時間: 灰青
+  return '#9E9E9E';                 // 12時間超: 灰
+};
+
 function updateCountdown() {
   if (displayMode === 'weather') return; // カウントダウン非表示モードでは何もしない
   const now = new Date();
@@ -1156,19 +1178,6 @@ function updateCountdown() {
     const mm  = Math.floor((s % 3600) / 60);
     const ss  = s % 60;
     return { sec: s, hms: hh > 0 ? `${hh}:${pad(mm)}:${pad(ss)}` : `${mm}:${pad(ss)}` };
-  };
-  const colorOf = s => {
-    if (s <=     0) return '#EC407A'; // 期限超過 (0:00 維持中): ピンク
-    if (s <=    60) return '#EA4335'; // 1分以下: 赤
-    if (s <=   120) return '#FF6D01'; // 2分以下: オレンジ
-    if (s <=   300) return '#F9A825'; // 5分以下: 濃いめの黄
-    if (s <=   600) return '#4FC3F7'; // 10分以下: 水色
-    if (s <=  1800) return '#1E88E5'; // 30分以下: 濃い青
-    if (s <=  3600) return '#AB47BC'; // 60分以下: 紫
-    if (s <=  7200) return '#66BB6A'; // 60〜120分: 明るめ緑
-    if (s <= 10800) return '#388E3C'; // 120〜180分: 濃いめ緑
-    if (s <= 43200) return '#546E7A'; // 180分〜12時間: 灰青
-    return '#9E9E9E';                 // 12時間超: 灰
   };
   const nearest = countdownTargets[0];
   const r = fmtRemain(nearest.time);
@@ -1413,7 +1422,9 @@ function renderTrackerList(keepScroll) {
     const arrCls  = 'tr-arr' + (unreachable ? ' tr-unreachable' : '');
     // 残り時間は次発とその次の2件まで出す
     const showLeft = (i === picked.nextIdx || i === picked.nextIdx + 1);
-    const left   = showLeft ? fmtRemainSec(nowSecOf(r[0])) : '';
+    const leftSec = nowSecOf(r[0]);
+    const left    = showLeft ? fmtRemainSec(leftSec) : '';
+    const leftSty = showLeft ? ` style="color:${colorOf(leftSec)}"` : '';
     const tyName = TT_TYPES[r[1]] || '';
     const tyCls  = 'tr-type' + (TRACKER_TYPE_CLASS[tyName] ? ' ' + TRACKER_TYPE_CLASS[tyName] : '');
     return `<div class="${cls}"${color}>` +
@@ -1423,7 +1434,7 @@ function renderTrackerList(keepScroll) {
       `<span class="${tyCls}">${escHtml(tyName)}</span>` +
       `<span class="${destCls}">${escHtml(TT_DESTS[r[2]] || '')}</span>` +
       `<span class="${arrCls}">${arr}</span>` +
-      `<span class="tr-left">${left}</span>` +
+      `<span class="tr-left"${leftSty}>${left}</span>` +
       `</div>`;
   }).join('');
   // 次発が範囲外＝本日の残り列車なし。行は残したまま案内を追記する
