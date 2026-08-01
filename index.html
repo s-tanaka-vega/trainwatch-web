@@ -302,6 +302,11 @@
     }
     .tracker-row.past { opacity: 0.4; }
     .tracker-row.next { font-weight: 700; }
+    /* 目的地に早く着く2本に細い下線。行の高さが変わらないよう padding で 1px 相殺 */
+    .tracker-row.tr-soonest {
+      border-bottom: 1px solid rgba(38, 198, 218, 0.55);
+      padding-bottom: 2px;
+    }
     /* 発車時刻と残り時間は同サイズ。360px 幅で着時刻が省略されない上限が 1.6em */
     /* ▶ は小さめ。width は自身の font-size 基準なので列幅は従来どおり約 0.85em */
     .tr-mark { width: 1.25em; flex-shrink: 0; font-size: 0.68em; color: #26C6DA; }
@@ -1474,10 +1479,22 @@ function renderTrackerList(keepScroll) {
   const delay    = trackerDelayInfo(board.line);
   const nowSecOf = min => (min - nowMin) * 60 - now.getSeconds();
 
+  // これから乗れる列車のうち、目的地への到着が早い2本（先行の各停を特急が追い越す場合があるので
+  // 発車順ではなく到着時刻順で選ぶ）
+  const soonestArr = new Set(
+    picked.list
+      .map((r, i) => ({ i, arr: r[3] }))
+      .filter(o => o.i >= picked.nextIdx && o.arr >= 0)
+      .sort((a, b) => a.arr - b.arr)
+      .slice(0, 2)
+      .map(o => o.i)
+  );
+
   const rowsHtml = picked.list.map((r, i) => {
     const isNext = (i === picked.nextIdx);
     const isPast = (i < picked.nextIdx);
-    const cls    = 'tracker-row' + (isPast ? ' past' : '') + (isNext ? ' next' : '');
+    const cls    = 'tracker-row' + (isPast ? ' past' : '') + (isNext ? ' next' : '')
+                 + (soonestArr.has(i) ? ' tr-soonest' : '');
     const color  = delay ? ` style="color:${delay.color}"` : '';
     const unreachable = r[3] < 0;
     const arr    = unreachable ? '不可' : `${escHtml(arrAbbr(board.arrLabel))} ${fmtHHMM(r[3])}`;
