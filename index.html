@@ -288,24 +288,27 @@
     #tracker-list {
       background: #1e1e1e;
       border-radius: 10px;
-      padding: 6px 8px;
-      max-height: 260px;
+      padding: 10px 12px;
+      max-height: 320px;
       overflow-y: auto;
       font-size: 0.88rem;
     }
     .tracker-row {
       display: flex;
       align-items: center;
-      line-height: 1.9em;
+      line-height: 2.05em;
+      padding: 3px 2px;      /* 行同士がくっつかない程度の余白 */
       white-space: nowrap;
     }
     .tracker-row.past { opacity: 0.4; }
     .tracker-row.next { font-weight: 700; }
     /* 発車時刻と残り時間は同サイズ。360px 幅で着時刻が省略されない上限が 1.6em */
-    .tr-mark { width: 0.85em; flex-shrink: 0; color: #26C6DA; }
+    /* ▶ は小さめ。width は自身の font-size 基準なので列幅は従来どおり約 0.85em */
+    .tr-mark { width: 1.25em; flex-shrink: 0; font-size: 0.68em; color: #26C6DA; }
     .tr-dep  {
       width: 2.85em;         /* 自身の font-size 基準。"12:34" が入る幅 */
       flex-shrink: 0;
+      margin-right: 0.16em;  /* 太字時に種別とくっつかないよう僅かに空ける */
       font-size: 1.6em;
       line-height: 1;        /* 行高を base の line-height に合わせる */
       font-variant-numeric: tabular-nums;
