@@ -288,7 +288,7 @@
     #tracker-list {
       background: #1e1e1e;
       border-radius: 10px;
-      padding: 10px 12px;
+      padding: 10px 8px 10px 12px;   /* 残り時間の桁が窮屈なので右だけ詰める */
       max-height: 320px;
       overflow-y: auto;
       font-size: 0.88rem;
@@ -324,13 +324,13 @@
     .tr-dest { width: 4.0em; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; }
     .tr-arr  { flex: 1; min-width: 0; color: #9e9e9e; overflow: hidden; text-overflow: ellipsis; }
     .tr-left {
-      width: 2.85em;         /* "12:34"（5桁）想定の幅 */
+      width: 3.2em;          /* 太字の "19:19"（5桁）が右に溢れない幅 */
       flex-shrink: 0;
       text-align: right;
       font-size: 1.6em;      /* .tr-dep と同サイズ */
       line-height: 1;
       font-weight: 700;
-      letter-spacing: 0.02em;
+      letter-spacing: 0;
       font-variant-numeric: tabular-nums;
       overflow: hidden;
     }
