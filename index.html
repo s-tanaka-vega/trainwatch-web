@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>TrainWatcher</title>
+  <title>TrainNow</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@900&display=swap" rel="stylesheet">
@@ -238,6 +238,11 @@
       border-color: #26C6DA;
       color: #26C6DA;
     }
+    /* ルート2はライトグリーン。ランクの平常色 #34A853 とは別色にして状態表示と混同させない */
+    #tracker-toggle.on.r2 {
+      border-color: #9CCC65;
+      color: #9CCC65;
+    }
     #tracker-head {
       display: flex;
       align-items: center;
@@ -284,6 +289,10 @@
       border-color: #26C6DA;
       color: #26C6DA;
       font-weight: 700;
+    }
+    .tracker-st-btn.sel.r2 {
+      border-color: #9CCC65;
+      color: #9CCC65;
     }
     #tracker-list {
       background: #1e1e1e;
@@ -348,7 +357,7 @@
 <body>
 
 <div class="navbar">
-  <span class="navbar-title">TrainWatcher</span><span id="navbar-date"></span><span id="battery">--</span>
+  <span class="navbar-title">TrainNow 1.00</span><span id="navbar-date"></span><span id="battery">--</span>
   <button id="refresh-btn" onclick="manualRefresh()">↺</button>
 </div>
 
@@ -1446,7 +1455,7 @@ function setTrackerBoard(id) {
 function renderTrackerControls() {
   const btn = document.getElementById('tracker-toggle');
   btn.textContent = trackerOn === 2 ? '追跡 ON (root 2)' : trackerOn === 1 ? '追跡 ON' : '追跡 OFF';
-  btn.className   = trackerOn ? 'on' : '';
+  btn.className   = trackerOn ? (trackerOn === 2 ? 'on r2' : 'on') : '';
   document.getElementById('tracker-body').className = trackerOn ? 'on' : '';
 
   // 方向ボタンは追跡ボタンと同じ行にあるので、OFF 時は自前で消す
@@ -1459,9 +1468,10 @@ function renderTrackerControls() {
     `<button class="tracker-dir-btn${trackerDir==='back'?' sel':''}" ` +
     `onclick="setTrackerDir('back')">▼帰り</button>`;
 
+  const selCls = (trackerOn === 2) ? ' sel r2' : ' sel';
   document.getElementById('tracker-stations').innerHTML =
     TRACKER_BOARDS[trackerRoute()][trackerDir].map(b =>
-      `<button class="tracker-st-btn${b.id===trackerBoardId?' sel':''}" ` +
+      `<button class="tracker-st-btn${b.id===trackerBoardId?selCls:''}" ` +
       `onclick="setTrackerBoard('${b.id}')">${escHtml(b.station)}</button>`
     ).join('');
 }
