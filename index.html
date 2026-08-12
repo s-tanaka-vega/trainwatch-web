@@ -268,6 +268,29 @@
       font-family: inherit;
     }
     .tracker-dir-btn.sel { color: #CE93D8; }
+    /* GPS 探索。r1 シアン / r2 ライトグリーン / 方向の薄紫と被らないアンバー */
+    #gps-toggle {
+      background: none;
+      border: 1px solid #2d2d2d;
+      border-radius: 6px;
+      color: #666;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 5px 11px;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    #gps-toggle.on     { border-color: #FFB74D; color: #FFB74D; }
+    #gps-toggle.manual { border-color: #FFB74D; color: #B0873B; }
+    #gps-toggle.err    { border-color: #5a2d2d; color: #8d5a5a; }
+    #gps-info {
+      display: none;
+      font-size: 0.78rem;
+      color: #FFB74D;
+      margin-bottom: 6px;
+    }
+    #gps-info.on { display: block; }
     #tracker-stations {
       display: flex;
       flex-wrap: wrap;
@@ -316,6 +339,8 @@
       border-bottom: 1px solid rgba(38, 198, 218, 0.55);
       padding-bottom: 2px;
     }
+    /* GPS の候補印。カラムを増やすと 375px で溢れるので inset shadow で行の左端に引く */
+    .tracker-row.tr-gps { box-shadow: inset 3px 0 0 #FFB74D; }
     /* 発車時刻と残り時間は同サイズ。360px 幅で着時刻が省略されない上限が 1.6em */
     /* ▶ は小さめ。width は自身の font-size 基準なので列幅は従来どおり約 0.85em */
     .tr-mark { width: 1.25em; flex-shrink: 0; font-size: 0.68em; color: #26C6DA; }
@@ -357,7 +382,7 @@
 <body>
 
 <div class="navbar">
-  <span class="navbar-title">TrainNow 1.00</span><span id="navbar-date"></span><span id="battery">--</span>
+  <span class="navbar-title">TrainNow 1.01</span><span id="navbar-date"></span><span id="battery">--</span>
   <button id="refresh-btn" onclick="manualRefresh()">↺</button>
 </div>
 
@@ -403,9 +428,11 @@
   <div id="tracker-head">
     <button id="tracker-toggle" onclick="toggleTracker()">追跡 OFF</button>
     <div id="tracker-dir"></div>
+    <button id="gps-toggle" onclick="toggleGps()">GPS OFF</button>
   </div>
   <div id="tracker-body">
     <div id="tracker-stations"></div>
+    <div id="gps-info"></div>
     <div id="tracker-list"></div>
   </div>
 </div>
@@ -1435,6 +1462,7 @@ function toggleTracker() {
   trackerOn = (trackerOn + 1) % 3;
   try { localStorage.setItem(LS_TRACKER_ON, String(trackerOn)); } catch(e) {}
   if (trackerOn) trackerBoardId = TRACKER_DEFAULT_BOARD[trackerRoute()][trackerDir];
+  if (trackerOn && gpsState === 'auto') applyGpsNearest(true); else gpsUpdateWalk();
   renderTrackerControls();
   renderTrackerList();
 }
@@ -1442,12 +1470,15 @@ function toggleTracker() {
 function setTrackerDir(dir) {
   trackerDir     = dir;
   trackerBoardId = TRACKER_DEFAULT_BOARD[trackerRoute()][dir];
+  if (gpsState === 'auto') applyGpsNearest(true); else gpsUpdateWalk();
   renderTrackerControls();
   renderTrackerList();
 }
 
 function setTrackerBoard(id) {
   trackerBoardId = id;
+  if (gpsState === 'auto') gpsState = 'manual';   // 手で選んだら自動選択を止める
+  gpsUpdateWalk();
   renderTrackerControls();
   renderTrackerList();
 }
@@ -1457,6 +1488,7 @@ function renderTrackerControls() {
   btn.textContent = trackerOn === 2 ? '追跡 ON (root 2)' : trackerOn === 1 ? '追跡 ON' : '追跡 OFF';
   btn.className   = trackerOn ? (trackerOn === 2 ? 'on r2' : 'on') : '';
   document.getElementById('tracker-body').className = trackerOn ? 'on' : '';
+  renderGpsControls();
 
   // 方向ボタンは追跡ボタンと同じ行にあるので、OFF 時は自前で消す
   const dirEl = document.getElementById('tracker-dir');
@@ -1564,11 +1596,15 @@ function renderTrackerList(keepScroll) {
       .map(o => o.i)
   );
 
+  // GPS: 歩いて間に合う最初の1本と、その中で最も早く着く1本
+  const gpsMark = gpsMarkIndexes(picked, nowMin);
+
   const rowsHtml = picked.list.map((r, i) => {
     const isNext = (i === picked.nextIdx);
     const isPast = (i < picked.nextIdx);
     const cls    = 'tracker-row' + (isPast ? ' past' : '') + (isNext ? ' next' : '')
-                 + (soonestArr.has(i) ? ' tr-soonest' : '');
+                 + (soonestArr.has(i) ? ' tr-soonest' : '')
+                 + (gpsMark.has(i) ? ' tr-gps' : '');
     const color  = delay ? ` style="color:${delay.color}"` : '';
     const unreachable = r[3] < 0;
     const arr    = unreachable ? '不可' : `${escHtml(arrAbbr(board.arrLabel))} ${fmtHHMM(r[3])}`;
@@ -1612,6 +1648,272 @@ function trackerDelayInfo(lineName) {
 }
 
 // ============================================================
+// GPS 探索
+// ============================================================
+const LS_GPS_ON = 'trainwatch_gps_on';
+
+// 駅の緯度経度（Wikipedia 記載値 2026-08-12）。徒歩ETAは数十m精度で足りるため代表点1つ
+const STATION_GEO = {
+  '秦野':     [35.37028, 139.22583],
+  '相模大野': [35.53194, 139.43778],
+  '中央林間': [35.50833, 139.44417],
+  '南町田':   [35.51139, 139.47075],
+  '海老名':   [35.45270, 139.39110],
+  '横浜':     [35.46611, 139.62250],
+  '馬車道':   [35.45014, 139.63617],
+};
+
+// 低精度測位。GNSS チップを起こさないので電池への影響が小さい
+const GPS_OPTS = { enableHighAccuracy: false, maximumAge: 90000, timeout: 10000 };
+
+const GPS_WALK_MPM      = 80;      // 徒歩 分速80m（不動産表示基準）
+const GPS_DETOUR        = 1.3;     // 直線距離→実歩行距離の迂回係数
+const GPS_MARGIN_MIN    = 1;       // 改札・ホームまでの余裕
+const GPS_ACC_LIMIT_M   = 500;     // これより精度が悪ければ徒歩時間を出さない
+const GPS_SWITCH_HYST_M = 100;     // 最寄駅を切り替える最小の差
+const GPS_NEAR_M        = 150;     // 駅に着いたとみなす距離
+const GPS_STILL_M       = 50;      // これ未満の移動は動いていない扱い
+const GPS_FAST_LEAD_MIN = 10;      // 次発までこの分数以内なら間隔を詰める
+const GPS_FAST_DIST_M   = 300;
+const GPS_INT_BASE_MS   = 120000;
+const GPS_INT_FAST_MS   = 60000;
+const GPS_INT_MAX_MS    = 300000;
+
+// 'off' | 'wait' | 'auto' | 'manual' | 'err'
+let gpsState      = 'off';
+let gpsPos        = null;   // { lat, lon, acc }
+let gpsLastFix    = null;   // 直前の測位地点。バックオフ判定用
+let gpsTimer      = null;
+let gpsIntervalMs = GPS_INT_BASE_MS;
+let gpsDistM      = null;   // 選択中の駅までの直線距離
+let gpsWalkMin    = null;   // 同 徒歩分。精度不足なら null
+
+function gpsActive() { return gpsState === 'auto' || gpsState === 'manual'; }
+
+// 2点間の距離(m)
+function gpsDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371000, rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad, dLon = (lon2 - lon1) * rad;
+  const s1 = Math.sin(dLat / 2), s2 = Math.sin(dLon / 2);
+  const a = s1 * s1 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * s2 * s2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+
+// ボードID から { station, geo } を引く
+function gpsFindBoard(id) {
+  for (const route of Object.keys(TRACKER_BOARDS)) {
+    for (const dir of Object.keys(TRACKER_BOARDS[route])) {
+      for (const b of TRACKER_BOARDS[route][dir]) {
+        if (b.id === id) return { station: b.station, geo: STATION_GEO[b.station] || null };
+      }
+    }
+  }
+  return null;
+}
+
+function gpsWalkMinutes(distM) {
+  if (!gpsPos || gpsPos.acc > GPS_ACC_LIMIT_M) return null;
+  return Math.ceil(distM * GPS_DETOUR / GPS_WALK_MPM) + GPS_MARGIN_MIN;
+}
+
+// 選択中の駅までの距離・徒歩分を更新する（手動選択時も出す）
+function gpsUpdateWalk() {
+  const b = gpsPos ? gpsFindBoard(trackerBoardId) : null;
+  if (!b || !b.geo) { gpsDistM = null; gpsWalkMin = null; return; }
+  gpsDistM   = gpsDistance(gpsPos.lat, gpsPos.lon, b.geo[0], b.geo[1]);
+  gpsWalkMin = gpsWalkMinutes(gpsDistM);
+}
+
+// 現在のルート・方向のボード群から最寄りを選ぶ。force 以外は 100m のヒステリシス付き
+function applyGpsNearest(force) {
+  if (!gpsPos) return;
+  let bestId = null, bestD = Infinity;
+  for (const b of TRACKER_BOARDS[trackerRoute()][trackerDir]) {
+    const g = STATION_GEO[b.station];
+    if (!g) continue;
+    const d = gpsDistance(gpsPos.lat, gpsPos.lon, g[0], g[1]);
+    if (d < bestD) { bestD = d; bestId = b.id; }
+  }
+  if (bestId === null) { gpsUpdateWalk(); return; }
+  if (!force && bestId !== trackerBoardId) {
+    const cur  = gpsFindBoard(trackerBoardId);
+    const curD = (cur && cur.geo)
+      ? gpsDistance(gpsPos.lat, gpsPos.lon, cur.geo[0], cur.geo[1]) : Infinity;
+    // 今の駅より 100m 以上近くないと切り替えない（境界でのバタつき防止）
+    if (bestD > curD - GPS_SWITCH_HYST_M) bestId = trackerBoardId;
+  }
+  trackerBoardId = bestId;
+  gpsUpdateWalk();
+}
+
+// 選択中ボードの次発まで何分か。取れなければ null
+function gpsLeadMin() {
+  const board = (typeof TIMETABLE !== 'undefined') ? TIMETABLE[trackerBoardId] : null;
+  if (!board) return null;
+  const now  = new Date();
+  const rows = board[trackerDiaKind(now)];
+  if (!rows || !rows.length) return null;
+  const nowMin = trackerNowMin(now);
+  const next   = rows.find(r => r[0] >= nowMin);
+  return next ? (next[0] - nowMin) : null;
+}
+
+// 駅に着いたら伸ばし、次発が近く駅から遠いときだけ詰める
+function gpsNextInterval(movedM) {
+  if (gpsDistM !== null && gpsDistM <= GPS_NEAR_M) return GPS_INT_MAX_MS;
+  if (movedM < GPS_STILL_M) return Math.min(GPS_INT_MAX_MS, Math.round(gpsIntervalMs * 1.5));
+  const lead = gpsLeadMin();
+  if (gpsDistM !== null && gpsDistM > GPS_FAST_DIST_M &&
+      lead !== null && lead <= GPS_FAST_LEAD_MIN) return GPS_INT_FAST_MS;
+  return GPS_INT_BASE_MS;
+}
+
+function gpsSchedule(ms) {
+  if (gpsTimer) clearTimeout(gpsTimer);
+  gpsIntervalMs = ms;
+  gpsTimer = setTimeout(() => {
+    gpsTimer = null;
+    if (!gpsActive() && gpsState !== 'wait') return;
+    // 非表示中・追跡パネル非表示中は測位しない。間隔だけ空けて待つ
+    // 追跡パネルが見えていない時も測位しない
+    if (document.hidden || displayMode !== 'both' || !trackerOn) { gpsSchedule(gpsIntervalMs); return; }
+    gpsRequest();
+  }, ms);
+}
+
+function gpsRequest() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(gpsOnSuccess, gpsOnError, GPS_OPTS);
+}
+
+function gpsOnSuccess(pos) {
+  // OFF にした直後に飛んでくる遅延コールバックは捨てる
+  if (gpsState === 'off' || gpsState === 'err') return;
+  const c = pos.coords;
+  const moved = gpsLastFix
+    ? gpsDistance(gpsLastFix.lat, gpsLastFix.lon, c.latitude, c.longitude)
+    : Infinity;
+  gpsPos     = { lat: c.latitude, lon: c.longitude, acc: c.accuracy };
+  gpsLastFix = { lat: c.latitude, lon: c.longitude };
+  if (gpsState === 'wait') gpsState = 'auto';
+  if (gpsState === 'auto') applyGpsNearest(false); else gpsUpdateWalk();
+  gpsSchedule(gpsNextInterval(moved));
+  renderTrackerControls();
+  renderTrackerList(true);
+}
+
+// 権限拒否は諦める。タイムアウト等は状態を変えず次の間隔で再試行する
+function gpsOnError(err) {
+  if (gpsState === 'off') return;
+  if (err && err.code === 1) {
+    gpsState = 'err';
+    gpsPos = null; gpsLastFix = null; gpsDistM = null; gpsWalkMin = null;
+    try { localStorage.setItem(LS_GPS_ON, '0'); } catch(e) {}
+    if (gpsTimer) { clearTimeout(gpsTimer); gpsTimer = null; }
+    renderTrackerControls();
+    renderTrackerList(true);
+    return;
+  }
+  gpsSchedule(GPS_INT_BASE_MS);
+}
+
+function startGps() {
+  if (!navigator.geolocation) { gpsState = 'err'; renderGpsControls(); return; }
+  gpsState = 'wait';
+  try { localStorage.setItem(LS_GPS_ON, '1'); } catch(e) {}
+  renderGpsControls();
+  gpsRequest();
+  gpsSchedule(GPS_INT_BASE_MS);
+}
+
+function stopGps() {
+  gpsState = 'off';
+  gpsPos = null; gpsLastFix = null; gpsDistM = null; gpsWalkMin = null;
+  try { localStorage.setItem(LS_GPS_ON, '0'); } catch(e) {}
+  if (gpsTimer) { clearTimeout(gpsTimer); gpsTimer = null; }
+  renderTrackerControls();
+  renderTrackerList(true);
+}
+
+// OFF/不可 → 測位開始 / 手動 → 自動選択に復帰 / それ以外 → 停止
+function toggleGps() {
+  if (gpsState === 'off' || gpsState === 'err') { startGps(); return; }
+  if (gpsState === 'manual') {
+    gpsState = 'auto';
+    applyGpsNearest(true);
+    renderTrackerControls();
+    renderTrackerList(true);
+    return;
+  }
+  stopGps();
+}
+
+// スリープ復帰時に取り直す
+function gpsResume() {
+  if (!gpsActive() && gpsState !== 'wait') return;
+  if (displayMode !== 'both') return;
+  gpsRequest();
+  gpsSchedule(GPS_INT_BASE_MS);
+}
+
+function gpsFmtDist(m) {
+  return m >= 1000 ? `${(m / 1000).toFixed(1)}km` : `${Math.round(m / 10) * 10}m`;
+}
+
+function renderGpsControls() {
+  const btn = document.getElementById('gps-toggle');
+  btn.style.display = trackerOn ? 'inline-block' : 'none';
+  btn.textContent =
+    gpsState === 'auto'   ? 'GPS ON'        :
+    gpsState === 'manual' ? 'GPS ON (手動)' :
+    gpsState === 'wait'   ? 'GPS 測位中…'   :
+    gpsState === 'err'    ? 'GPS 不可'      : 'GPS OFF';
+  btn.className =
+    gpsState === 'auto'   ? 'on'     :
+    gpsState === 'manual' ? 'manual' :
+    gpsState === 'err'    ? 'err'    : '';
+
+  const info = document.getElementById('gps-info');
+  const b    = gpsFindBoard(trackerBoardId);
+  if (trackerOn && gpsActive() && gpsDistM !== null && b) {
+    info.className   = 'on';
+    info.textContent = gpsWalkMin !== null
+      ? `${b.station}まで 徒歩 約${gpsWalkMin}分（${gpsFmtDist(gpsDistM)}）`
+      : `${b.station}まで ${gpsFmtDist(gpsDistM)}（位置精度が低いため徒歩時間は非表示）`;
+  } else {
+    info.className   = '';
+    info.textContent = '';
+  }
+}
+
+// 印は2本だけ。既存の行の表示は変えない
+function gpsMarkIndexes(picked, nowMin) {
+  const out = new Set();
+  if (!gpsActive() || gpsWalkMin === null) return out;
+  const readyMin = nowMin + gpsWalkMin;
+  let first = -1;
+  for (let i = picked.nextIdx; i < picked.list.length; i++) {
+    if (picked.list[i][0] >= readyMin) { first = i; break; }
+  }
+  if (first < 0) return out;
+  out.add(first);
+  // 間に合う列車のうち目的駅に最も早く着く1本（到着不明 -1 は除外）
+  let bestI = -1, bestArr = Infinity;
+  for (let i = first; i < picked.list.length; i++) {
+    const arr = picked.list[i][3];
+    if (arr >= 0 && arr < bestArr) { bestArr = arr; bestI = i; }
+  }
+  if (bestI >= 0) out.add(bestI);
+  return out;
+}
+
+function initGps() {
+  let want = false;
+  try { want = localStorage.getItem(LS_GPS_ON) === '1'; } catch(e) {}
+  if (want) startGps(); else renderGpsControls();
+}
+
+// ============================================================
 // 起動
 // ============================================================
 // 1秒ごとの再描画は1本のタイマーに集約（タイマー間のズレ防止）
@@ -1631,6 +1933,7 @@ try {
 } catch(e) {}
 applyDisplayMode(initialMode);
 initTracker();
+initGps();
 
 // バッテリー
 (async () => {
@@ -1669,6 +1972,7 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) return;
   tick();   // スリープ復帰直後の時計・カウントダウンのズレを即補正
   if (Date.now() - lastAutoFetch >= RESUME_STALE_MS) autoFetch();
+  gpsResume();
 });
 </script>
 </body>
