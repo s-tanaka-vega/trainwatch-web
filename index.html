@@ -1485,7 +1485,7 @@ function setTrackerBoard(id) {
 
 function renderTrackerControls() {
   const btn = document.getElementById('tracker-toggle');
-  btn.textContent = trackerOn === 2 ? '追跡 ON (root 2)' : trackerOn === 1 ? '追跡 ON' : '追跡 OFF';
+  btn.textContent = trackerOn === 2 ? '追跡 ON (r2)' : trackerOn === 1 ? '追跡 ON' : '追跡 OFF';
   btn.className   = trackerOn ? (trackerOn === 2 ? 'on r2' : 'on') : '';
   document.getElementById('tracker-body').className = trackerOn ? 'on' : '';
   renderGpsControls();
@@ -1865,7 +1865,7 @@ function renderGpsControls() {
   btn.style.display = trackerOn ? 'inline-block' : 'none';
   btn.textContent =
     gpsState === 'auto'   ? 'GPS ON'        :
-    gpsState === 'manual' ? 'GPS ON (手動)' :
+    gpsState === 'manual' ? 'GPS ON (手)' :
     gpsState === 'wait'   ? 'GPS 測位中…'   :
     gpsState === 'err'    ? 'GPS 不可'      : 'GPS OFF';
   btn.className =
