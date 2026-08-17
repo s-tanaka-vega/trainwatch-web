@@ -300,13 +300,6 @@
     #gps-toggle.on     { border-color: #FFB74D; color: #FFB74D; }
     #gps-toggle.manual { border-color: #FFB74D; color: #B0873B; }
     #gps-toggle.err    { border-color: #5a2d2d; color: #8d5a5a; }
-    #gps-info {
-      display: none;
-      font-size: 0.78rem;
-      color: #FFB74D;
-      margin-bottom: 6px;
-    }
-    #gps-info.on { display: block; }
     #tracker-stations {
       display: flex;
       flex-wrap: wrap;
@@ -548,7 +541,6 @@
   </div>
   <div id="tracker-body">
     <div id="tracker-stations"></div>
-    <div id="gps-info"></div>
     <div id="tracker-list"></div>
   </div>
 </div>
@@ -579,7 +571,7 @@
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>天気</span><span class="help-val">秦野 / 南町田 の今日と明日</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>ランク行</span><span class="help-val">左が取得ステータス、中央が路線ランクの並び、右端が GPS の徒歩情報</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>リンク</span><span class="help-val">秦野天気 / 関東広域電車情報 / モードセレクト</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>追跡パネル</span><span class="help-val">時刻表ベースの発車一覧（CD・ALL モードで表示）</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>追跡パネル</span><span class="help-val">時刻表ベースの発車一覧（ALL モードでのみ表示）</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>路線カード</span><span class="help-val">路線ごとの詳細とヘッドライン</span></div>
     </div>
     <div class="help-sub">傘アラート（左＝今日 / 右＝明日）</div>
@@ -645,8 +637,8 @@
     <div class="help-sub">モードセレクト / 任意時刻</div>
     <div class="help-list" style="--kw:5.7em">
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>天気</span><span class="help-val">天気パネルのみ。追跡パネルは隠れる</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>CD</span><span class="help-val">カウントダウンのみ。追跡パネルが出る</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>ALL</span><span class="help-val">天気とカウントダウンの両方</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>CD</span><span class="help-val">カウントダウンのみ。天気も追跡パネルも出ない</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>ALL</span><span class="help-val">天気とカウントダウンの両方。追跡パネルが出るのはこのモードだけ</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#26C6DA">■</span>任意時刻</span><span class="help-val">CD / ALL のときだけ表示。「14:30 打合せ」「1430 打合せ」形式。空欄で解除。ページを開いている間だけ保持</span></div>
     </div>
     <div class="help-note">カウントダウンは最大 2 件。通勤・始業・終業などの定型スケジュールから自動で補充され、時刻を過ぎた 1 分後に消えて次が繰り上がる。</div>
@@ -690,6 +682,13 @@
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#B0873B">■</span>GPS ON (手)</span><span class="help-val">駅を手で選び、GPS の自動追随を外した状態</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#FFB74D">■</span>GPS 測位中…</span><span class="help-val">位置情報を取得している最中</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#8d5a5a">■</span>GPS 不可</span><span class="help-val">位置情報の取得に失敗（権限オフ / 圏外など）</span></div>
+    </div>
+    <div class="help-sub">ランク行右端の GPS 表示</div>
+    <div class="help-list" style="--kw:9.4em">
+    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#FFB74D">■</span>南町田 7分/400m</span><span class="help-val">正常。最寄り駅までの徒歩時間と距離</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#B0873B">■</span>南町田 400m/精度難</span><span class="help-val">位置精度が 500m より悪く、徒歩時間を出せない</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#8d5a5a">■</span>GPS取得不可</span><span class="help-val">位置情報の取得に失敗</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>（表示なし）</span><span class="help-val">追跡 OFF、GPS OFF、測位中のいずれか</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#CE93D8">■</span>方向（選択中）</span><span class="help-val">上り / 下りなどの選択</span></div>
     </div>
     <div class="help-note">追跡パネルは内蔵の時刻表データを使うため、遅延そのものは反映されない。遅れの有無は行末の <span style="color:#EA4335;font-weight:700">!</span> と路線ランクで判断する。</div>
@@ -2121,21 +2120,23 @@ function renderGpsControls() {
     gpsState === 'manual' ? 'manual' :
     gpsState === 'err'    ? 'err'    : '';
 
-  const info   = document.getElementById('gps-info');
+  // 正常時も異常時もランク行に短く出す。専用行は作らない
   const inline = document.getElementById('gps-info-inline');
   const b      = gpsFindBoard(trackerBoardId);
-  const show   = trackerOn && gpsActive() && gpsDistM !== null && b;
-  // 徒歩分が出るときはランク行に短縮表示。精度不足時だけ長文を専用行に出す
-  inline.textContent = (show && gpsWalkMin !== null)
-    ? `${b.station} ${gpsWalkMin}分/${gpsFmtDist(gpsDistM)}`
-    : '';
-  if (show && gpsWalkMin === null) {
-    info.className   = 'on';
-    info.textContent = `${b.station}まで ${gpsFmtDist(gpsDistM)}（位置精度が低いため徒歩時間は非表示）`;
-  } else {
-    info.className   = '';
-    info.textContent = '';
+  let txt = '', col = '#FFB74D';
+  if (trackerOn) {
+    if (gpsState === 'err') {
+      txt = 'GPS取得不可';  col = '#8d5a5a';
+    } else if (gpsActive() && b && gpsDistM !== null) {
+      if (gpsWalkMin !== null) {
+        txt = `${b.station} ${gpsWalkMin}分/${gpsFmtDist(gpsDistM)}`;
+      } else {
+        txt = `${b.station} ${gpsFmtDist(gpsDistM)}/精度難`;  col = '#B0873B';
+      }
+    }
   }
+  inline.textContent = txt;
+  inline.style.color = col;
 }
 
 // 印は2本だけ。既存の行の表示は変えない
