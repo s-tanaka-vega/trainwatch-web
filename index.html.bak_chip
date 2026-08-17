@@ -430,7 +430,7 @@
       margin: 14px 0 4px;
     }
     .help-h + .help-sub { border-top: none; padding-top: 0; margin-top: 8px; }
-    .help-list { --kw:7.7em; margin-bottom: 2px; }
+    .help-list { --kw: 6.2em; margin-bottom: 2px; }
     .help-li {
       display: flex;
       align-items: flex-start;
@@ -442,14 +442,6 @@
       flex-shrink: 0;
       min-width: var(--kw);
       font-weight: 700;
-      color: #e0e0e0;
-    }
-    /* 色の情報はチップ側に逃がし、文字は白で揃える */
-    .help-chip {
-      display: inline-block;
-      width: 1.1em;
-      font-size: 0.86em;
-      margin-right: 4px;
     }
     .help-val { flex: 1; min-width: 0; color: #9e9e9e; }
     .help-note {
@@ -549,109 +541,108 @@
     </div>
     <div class="help-h">1. アプリ全体の見かた</div>
     <div class="help-sub">画面の並び（上から）</div>
-    <div class="help-list" style="--kw:6.7em">
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>時計</span><span class="help-val">現在時刻。1秒ごとに更新</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>傘アラート</span><span class="help-val">今日 / 明日 の傘の要否</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>天気</span><span class="help-val">秦野 / 南町田 の今日と明日</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>ランク行</span><span class="help-val">左が取得ステータス、右が路線ランクの並び</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>リンク</span><span class="help-val">秦野天気 / 関東広域電車情報 / モードセレクト</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>追跡パネル</span><span class="help-val">時刻表ベースの発車一覧（CD・ALL モードで表示）</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>路線カード</span><span class="help-val">路線ごとの詳細とヘッドライン</span></div>
+    <div class="help-list" style="--kw:5.2em">
+    <div class="help-li"><span class="help-key" style="color:#e0e0e0">時計</span><span class="help-val">現在時刻。1秒ごとに更新</span></div>
+    <div class="help-li"><span class="help-key" style="color:#e0e0e0">傘アラート</span><span class="help-val">今日 / 明日 の傘の要否</span></div>
+    <div class="help-li"><span class="help-key" style="color:#e0e0e0">天気</span><span class="help-val">秦野 / 南町田 の今日と明日</span></div>
+    <div class="help-li"><span class="help-key" style="color:#e0e0e0">ランク行</span><span class="help-val">左が取得ステータス、右が路線ランクの並び</span></div>
+    <div class="help-li"><span class="help-key" style="color:#e0e0e0">リンク</span><span class="help-val">秦野天気 / 関東広域電車情報 / モードセレクト</span></div>
+    <div class="help-li"><span class="help-key" style="color:#e0e0e0">追跡パネル</span><span class="help-val">時刻表ベースの発車一覧（CD・ALL モードで表示）</span></div>
+    <div class="help-li"><span class="help-key" style="color:#e0e0e0">路線カード</span><span class="help-val">路線ごとの詳細とヘッドライン</span></div>
     </div>
     <div class="help-sub">傘アラート（左＝今日 / 右＝明日）</div>
-    <div class="help-list" style="--kw:11.3em">
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#FF1744">■</span>☂️☂️ 傘必須！！</span><span class="help-val">雨・にわか雨・雷雨のいずれか、または降水確率 70% 以上</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#FF6D01">■</span>☂️ 傘推奨！</span><span class="help-val">降水確率 50% 以上</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#FBBC04">■</span>🌂 傘かも</span><span class="help-val">降水確率 30% 以上</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#90CAF9">■</span>☁️ 予備</span><span class="help-val">降水確率 20% 以上。折りたたみを鞄に入れておく程度</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#555">■</span>ー</span><span class="help-val">降水確率 20% 未満。傘は不要</span></div>
+    <div class="help-list" style="--kw:9.8em">
+    <div class="help-li"><span class="help-key" style="color:#FF1744">☂️☂️ 傘必須！！</span><span class="help-val">雨・にわか雨・雷雨のいずれか、または降水確率 70% 以上</span></div>
+    <div class="help-li"><span class="help-key" style="color:#FF6D01">☂️ 傘推奨！</span><span class="help-val">降水確率 50% 以上</span></div>
+    <div class="help-li"><span class="help-key" style="color:#FBBC04">🌂 傘かも</span><span class="help-val">降水確率 30% 以上</span></div>
+    <div class="help-li"><span class="help-key" style="color:#90CAF9">☁️ 予備</span><span class="help-val">降水確率 20% 以上。折りたたみを鞄に入れておく程度</span></div>
+    <div class="help-li"><span class="help-key" style="color:#555">ー</span><span class="help-val">降水確率 20% 未満。傘は不要</span></div>
     </div>
     <div class="help-note">秦野・南町田の高い方を採用。今日も明日と同じく「24時間の最大降水確率」で判定するため、今この瞬間が晴れでも傘マークが出ることがある。</div>
     <div class="help-sub">天気の色</div>
-    <div class="help-list" style="--kw:6.1em">
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>天気文言</span><span class="help-val">色は付けない。天候はアイコンで判断する</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>気温（今日）</span><span class="help-val"><span style="color:#880E4F">38℃〜</span> <span style="color:#C62828">33〜</span> <span style="color:#FF5722">28〜</span> <span style="color:#FF8A65">22〜</span> <span style="color:#FFD54F">16〜</span> <span style="color:#A5D6A7">10〜</span> <span style="color:#90CAF9">4〜</span> <span style="color:#42A5F5">4℃未満</span></span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>降水確率</span><span class="help-val"><span style="color:#4FC3F7">70%〜</span> / <span style="color:#90CAF9">40%〜</span> / <span style="color:#e0e0e0">40%未満</span>。今日・明日とも色を付ける</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>地点名</span><span class="help-val"><span style="color:#FF8C00">秦野</span> / <span style="color:#CE93D8">南町田</span>。明日の行は薄字</span></div>
+    <div class="help-list" style="--kw:4.6em">
+    <div class="help-li"><span class="help-key" style="color:#e0e0e0">天気文言</span><span class="help-val"><span style="color:#FFD54F">晴れ系</span> / <span style="color:#B0BEC5">くもり</span> / <span style="color:#9E9E9E">霧</span> / <span style="color:#81D4FA">霧雨</span> / <span style="color:#4FC3F7">雨</span> / <span style="color:#E1F5FE">雪</span> / <span style="color:#29B6F6">にわか雨</span> / <span style="color:#FF7043">雷雨</span></span></div>
+    <div class="help-li"><span class="help-key" style="color:#e0e0e0">気温</span><span class="help-val"><span style="color:#880E4F">38℃〜</span> <span style="color:#C62828">33〜</span> <span style="color:#FF5722">28〜</span> <span style="color:#FF8A65">22〜</span> <span style="color:#FFD54F">16〜</span> <span style="color:#A5D6A7">10〜</span> <span style="color:#90CAF9">4〜</span> <span style="color:#42A5F5">4℃未満</span></span></div>
+    <div class="help-li"><span class="help-key" style="color:#e0e0e0">降水確率</span><span class="help-val"><span style="color:#4FC3F7">70%〜</span> / <span style="color:#90CAF9">40%〜</span> / <span style="color:#e0e0e0">40%未満</span></span></div>
+    <div class="help-li"><span class="help-key" style="color:#e0e0e0">地点名</span><span class="help-val"><span style="color:#FF8C00">秦野</span> / <span style="color:#CE93D8">南町田</span>。明日の行は薄字</span></div>
     </div>
-    <div class="help-note">明日の行は参考情報なので、降水確率だけ色を残して他は無彩色にしてある。天気の色が付いているのは「今日の気温」と「今日・明日の降水確率」だけ。</div>
     <div class="help-sub">路線ランク A〜E</div>
-    <div class="help-list" style="--kw:4.9em">
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#34A853">■</span>A</span><span class="help-val">平常。異常なし</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#A8D18D">■</span>A-</span><span class="help-val">微遅 / 混雑。遅延スコアか混雑スコアが 3 以上</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#FBBC04">■</span>B</span><span class="help-val">予兆。遅延スコア 8 以上、またはツイート由来の遅延 10 分以上</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#EA4335">■</span>C</span><span class="help-val">遅延。平常運転でない、またはツイート由来 20 分以上</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#FF6D01">■</span>D</span><span class="help-val">大遅。「大幅」「ダイヤ乱れ」等の語、または 45 分以上</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#B21111">■</span>E</span><span class="help-val">不通。見合わせ / 運休 / 中断 / 脱線 / 運転停止</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#5f6368">■</span>-</span><span class="help-val">情報取得失敗</span></div>
+    <div class="help-list" style="--kw:3.4em">
+    <div class="help-li"><span class="help-key" style="color:#34A853">A</span><span class="help-val">平常。異常なし</span></div>
+    <div class="help-li"><span class="help-key" style="color:#A8D18D">A-</span><span class="help-val">微遅 / 混雑。遅延スコアか混雑スコアが 3 以上</span></div>
+    <div class="help-li"><span class="help-key" style="color:#FBBC04">B</span><span class="help-val">予兆。遅延スコア 8 以上、またはツイート由来の遅延 10 分以上</span></div>
+    <div class="help-li"><span class="help-key" style="color:#EA4335">C</span><span class="help-val">遅延。平常運転でない、またはツイート由来 20 分以上</span></div>
+    <div class="help-li"><span class="help-key" style="color:#FF6D01">D</span><span class="help-val">大遅。「大幅」「ダイヤ乱れ」等の語、または 45 分以上</span></div>
+    <div class="help-li"><span class="help-key" style="color:#B21111">E</span><span class="help-val">不通。見合わせ / 運休 / 中断 / 脱線 / 運転停止</span></div>
+    <div class="help-li"><span class="help-key" style="color:#5f6368">-</span><span class="help-val">情報取得失敗</span></div>
     </div>
     <div class="help-note">ラッシュ帯（7〜10時 / 17〜20時）は SNS が騒がしいのでスコア閾値を +3、深夜（23〜6時）は静かなので -2 して判定する。<br>カード内のスコアは <span style="color:#EA4335">50〜</span><span style="color:#FF6D01">20〜</span><span style="color:#FBBC04">10〜</span><span style="color:#FFF176">5〜</span> の順に色が強くなる。</div>
     <div class="help-sub">広域（関東広域）の件数</div>
-    <div class="help-list" style="--kw:6.7em">
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#34A853">■</span>0件 -</span><span class="help-val">関東全域で異常なし</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#FBBC04">■</span>1〜3件 !</span><span class="help-val">小規模</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#FF6D01">■</span>4〜8件 !</span><span class="help-val">やや多い</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#EA4335">■</span>9〜15件 !!</span><span class="help-val">多い</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#9C27B0">■</span>16件〜 !!</span><span class="help-val">全域が荒れている</span></div>
+    <div class="help-list" style="--kw:5.2em">
+    <div class="help-li"><span class="help-key" style="color:#34A853">0件 -</span><span class="help-val">関東全域で異常なし</span></div>
+    <div class="help-li"><span class="help-key" style="color:#FBBC04">1〜3件 !</span><span class="help-val">小規模</span></div>
+    <div class="help-li"><span class="help-key" style="color:#FF6D01">4〜8件 !</span><span class="help-val">やや多い</span></div>
+    <div class="help-li"><span class="help-key" style="color:#EA4335">9〜15件 !!</span><span class="help-val">多い</span></div>
+    <div class="help-li"><span class="help-key" style="color:#9C27B0">16件〜 !!</span><span class="help-val">全域が荒れている</span></div>
     </div>
     <div class="help-sub">上部のステータス</div>
-    <div class="help-list" style="--kw:6.7em">
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#26C6DA">■</span>未取得</span><span class="help-val">まだ取得していない</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#FBBC04">■</span>更新中</span><span class="help-val">取得中</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#EA4335">■</span>NG</span><span class="help-val">取得失敗。↺ で手動再取得</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#CE93D8">■</span>日付</span><span class="help-val">当日の日付</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#26C6DA">■</span>電池</span><span class="help-val">端末のバッテリー残量（対応ブラウザのみ）</span></div>
+    <div class="help-list" style="--kw:5.2em">
+    <div class="help-li"><span class="help-key" style="color:#26C6DA">未取得</span><span class="help-val">まだ取得していない</span></div>
+    <div class="help-li"><span class="help-key" style="color:#FBBC04">更新中</span><span class="help-val">取得中</span></div>
+    <div class="help-li"><span class="help-key" style="color:#EA4335">NG</span><span class="help-val">取得失敗。↺ で手動再取得</span></div>
+    <div class="help-li"><span class="help-key" style="color:#CE93D8">日付</span><span class="help-val">当日の日付</span></div>
+    <div class="help-li"><span class="help-key" style="color:#26C6DA">電池</span><span class="help-val">端末のバッテリー残量（対応ブラウザのみ）</span></div>
     </div>
     <div class="help-note">自動更新は 5 分間隔。裏に回っている間は取得せず、復帰時に古ければまとめて取り直す。</div>
     <div class="help-sub">モードセレクト / 任意時刻</div>
-    <div class="help-list" style="--kw:5.7em">
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>天気</span><span class="help-val">天気パネルのみ。追跡パネルは隠れる</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>CD</span><span class="help-val">カウントダウンのみ。追跡パネルが出る</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>ALL</span><span class="help-val">天気とカウントダウンの両方</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#26C6DA">■</span>任意時刻</span><span class="help-val">CD / ALL のときだけ表示。「14:30 打合せ」「1430 打合せ」形式。空欄で解除。ページを開いている間だけ保持</span></div>
+    <div class="help-list" style="--kw:4.2em">
+    <div class="help-li"><span class="help-key" style="color:#e0e0e0">天気</span><span class="help-val">天気パネルのみ。追跡パネルは隠れる</span></div>
+    <div class="help-li"><span class="help-key" style="color:#e0e0e0">CD</span><span class="help-val">カウントダウンのみ。追跡パネルが出る</span></div>
+    <div class="help-li"><span class="help-key" style="color:#e0e0e0">ALL</span><span class="help-val">天気とカウントダウンの両方</span></div>
+    <div class="help-li"><span class="help-key" style="color:#26C6DA">任意時刻</span><span class="help-val">CD / ALL のときだけ表示。「14:30 打合せ」「1430 打合せ」形式。空欄で解除。ページを開いている間だけ保持</span></div>
     </div>
     <div class="help-note">カウントダウンは最大 2 件。通勤・始業・終業などの定型スケジュールから自動で補充され、時刻を過ぎた 1 分後に消えて次が繰り上がる。</div>
     <div class="help-h">2. カウントダウンと電車追跡の色</div>
     <div class="help-sub">残り時間の色（カウントダウン・追跡パネル共通）</div>
-    <div class="help-list" style="--kw:7.9em">
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#EC407A">■</span>0:00 維持中</span><span class="help-val">時刻を過ぎた直後（1 分だけ残る）</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#EA4335">■</span>1分以下</span><span class="help-val">走っても間に合わない</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#FF6D01">■</span>2分以下</span><span class="help-val">ホームにいれば乗れる</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#F9A825">■</span>5分以下</span><span class="help-val">そろそろ出る</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#4FC3F7">■</span>10分以下</span><span class="help-val">余裕あり</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#1E88E5">■</span>30分以下</span><span class="help-val">準備を始める頃</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#AB47BC">■</span>60分以下</span><span class="help-val">1 時間以内</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#66BB6A">■</span>2時間以下</span><span class="help-val">まだ先</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#388E3C">■</span>3時間以下</span><span class="help-val">かなり先</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#546E7A">■</span>12時間以下</span><span class="help-val">当日中</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#9E9E9E">■</span>12時間超</span><span class="help-val">翌日以降</span></div>
+    <div class="help-list" style="--kw:6.4em">
+    <div class="help-li"><span class="help-key" style="color:#EC407A">0:00 維持中</span><span class="help-val">時刻を過ぎた直後（1 分だけ残る）</span></div>
+    <div class="help-li"><span class="help-key" style="color:#EA4335">1分以下</span><span class="help-val">走っても間に合わない</span></div>
+    <div class="help-li"><span class="help-key" style="color:#FF6D01">2分以下</span><span class="help-val">ホームにいれば乗れる</span></div>
+    <div class="help-li"><span class="help-key" style="color:#F9A825">5分以下</span><span class="help-val">そろそろ出る</span></div>
+    <div class="help-li"><span class="help-key" style="color:#4FC3F7">10分以下</span><span class="help-val">余裕あり</span></div>
+    <div class="help-li"><span class="help-key" style="color:#1E88E5">30分以下</span><span class="help-val">準備を始める頃</span></div>
+    <div class="help-li"><span class="help-key" style="color:#AB47BC">60分以下</span><span class="help-val">1 時間以内</span></div>
+    <div class="help-li"><span class="help-key" style="color:#66BB6A">2時間以下</span><span class="help-val">まだ先</span></div>
+    <div class="help-li"><span class="help-key" style="color:#388E3C">3時間以下</span><span class="help-val">かなり先</span></div>
+    <div class="help-li"><span class="help-key" style="color:#546E7A">12時間以下</span><span class="help-val">当日中</span></div>
+    <div class="help-li"><span class="help-key" style="color:#9E9E9E">12時間超</span><span class="help-val">翌日以降</span></div>
     </div>
     <div class="help-sub">列車種別の色</div>
-    <div class="help-list" style="--kw:9.1em">
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#FF6D01">■</span>快急 / 通快 / 快速</span><span class="help-val">快速急行系</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#CE93D8">■</span>特急 / 準特 / 通特</span><span class="help-val">特急系</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#EA4335">■</span>急行 / 通急</span><span class="help-val">急行系</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#66BB6A">■</span>準急 / 区急</span><span class="help-val">準急系</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#4FC3F7">■</span>各停</span><span class="help-val">各駅停車</span></div>
+    <div class="help-list" style="--kw:7.6em">
+    <div class="help-li"><span class="help-key" style="color:#FF6D01">快急 / 通快 / 快速</span><span class="help-val">快速急行系</span></div>
+    <div class="help-li"><span class="help-key" style="color:#CE93D8">特急 / 準特 / 通特</span><span class="help-val">特急系</span></div>
+    <div class="help-li"><span class="help-key" style="color:#EA4335">急行 / 通急</span><span class="help-val">急行系</span></div>
+    <div class="help-li"><span class="help-key" style="color:#66BB6A">準急 / 区急</span><span class="help-val">準急系</span></div>
+    <div class="help-li"><span class="help-key" style="color:#4FC3F7">各停</span><span class="help-val">各駅停車</span></div>
     </div>
     <div class="help-sub">追跡パネルの行のマーク</div>
-    <div class="help-list" style="--kw:7.9em">
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#26C6DA">■</span>▶</span><span class="help-val">次に来る 1 本。行全体が太字になる</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#EA4335">■</span>!</span><span class="help-val">その路線に遅延あり（ランク B 以下のとき点灯）</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#26C6DA">■</span>下線</span><span class="help-val">目的地に最も早く着く 2 本</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#FFB74D">■</span>左端の縦線</span><span class="help-val">GPS 位置から推定した乗車候補</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#666">■</span>灰色の行</span><span class="help-val">到着時刻が出せない / 乗り継げない便</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#9e9e9e">■</span>薄い行</span><span class="help-val">発車済み</span></div>
+    <div class="help-list" style="--kw:6.4em">
+    <div class="help-li"><span class="help-key" style="color:#26C6DA">▶</span><span class="help-val">次に来る 1 本。行全体が太字になる</span></div>
+    <div class="help-li"><span class="help-key" style="color:#EA4335">!</span><span class="help-val">その路線に遅延あり（ランク B 以下のとき点灯）</span></div>
+    <div class="help-li"><span class="help-key" style="color:#26C6DA">下線</span><span class="help-val">目的地に最も早く着く 2 本</span></div>
+    <div class="help-li"><span class="help-key" style="color:#FFB74D">左端の縦線</span><span class="help-val">GPS 位置から推定した乗車候補</span></div>
+    <div class="help-li"><span class="help-key" style="color:#666">灰色の行</span><span class="help-val">到着時刻が出せない / 乗り継げない便</span></div>
+    <div class="help-li"><span class="help-key" style="color:#9e9e9e">薄い行</span><span class="help-val">発車済み</span></div>
     </div>
     <div class="help-sub">追跡パネルのボタン色</div>
-    <div class="help-list" style="--kw:8.7em">
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#26C6DA">■</span>追跡 ON</span><span class="help-val">ルート1（通常の通勤ルート）。シアン</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#9CCC65">■</span>追跡 ON (r2)</span><span class="help-val">ルート2（別ルート）。ランクの平常色と混同しないよう別色</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#FFB74D">■</span>GPS ON</span><span class="help-val">位置情報で最寄り駅を自動選択中</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#B0873B">■</span>GPS ON (手)</span><span class="help-val">駅を手で選び、GPS の自動追随を外した状態</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#FFB74D">■</span>GPS 測位中…</span><span class="help-val">位置情報を取得している最中</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#8d5a5a">■</span>GPS 不可</span><span class="help-val">位置情報の取得に失敗（権限オフ / 圏外など）</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#CE93D8">■</span>方向（選択中）</span><span class="help-val">上り / 下りなどの選択</span></div>
+    <div class="help-list" style="--kw:7.2em">
+    <div class="help-li"><span class="help-key" style="color:#26C6DA">追跡 ON</span><span class="help-val">ルート1（通常の通勤ルート）。シアン</span></div>
+    <div class="help-li"><span class="help-key" style="color:#9CCC65">追跡 ON (r2)</span><span class="help-val">ルート2（別ルート）。ランクの平常色と混同しないよう別色</span></div>
+    <div class="help-li"><span class="help-key" style="color:#FFB74D">GPS ON</span><span class="help-val">位置情報で最寄り駅を自動選択中</span></div>
+    <div class="help-li"><span class="help-key" style="color:#B0873B">GPS ON (手)</span><span class="help-val">駅を手で選び、GPS の自動追随を外した状態</span></div>
+    <div class="help-li"><span class="help-key" style="color:#FFB74D">GPS 測位中…</span><span class="help-val">位置情報を取得している最中</span></div>
+    <div class="help-li"><span class="help-key" style="color:#8d5a5a">GPS 不可</span><span class="help-val">位置情報の取得に失敗（権限オフ / 圏外など）</span></div>
+    <div class="help-li"><span class="help-key" style="color:#CE93D8">方向（選択中）</span><span class="help-val">上り / 下りなどの選択</span></div>
     </div>
     <div class="help-note">追跡パネルは内蔵の時刻表データを使うため、遅延そのものは反映されない。遅れの有無は行末の <span style="color:#EA4335;font-weight:700">!</span> と路線ランクで判断する。</div>
     <div class="help-foot" onclick="closeHelp()">タップで閉じる ✕</div>
@@ -893,7 +884,7 @@ function renderWeather() {
       `<span class="weather-location" style="color:${info.labelColor}">${info.label}</span>` +
       `<span style="white-space:nowrap">` +
         `<span style="display:inline-block;width:1.6em;text-align:center">${info.icon}</span>` +
-        `<span>${escHtml(info.weatherDesc)}</span>&ensp;` +
+        `<span style="color:${wmoDescColor(info.code)}">${escHtml(info.weatherDesc)}</span>&ensp;` +
         `<span style="color:${tempColor(info.tempValue, info.code)}">${info.temp}°C</span>&ensp;` +
         `<span style="color:${precipColor(info.precipProb)}">${info.precipProb}%</span>` +
       `</span>`;
@@ -908,9 +899,9 @@ function renderWeather() {
     document.getElementById(info.tomorrowElemId).innerHTML =
       `<span class="weather-location" style="color:${info.labelColor};opacity:0.45">${info.label}</span>` +
       `<span style="white-space:nowrap">` +
-        `<span style="display:inline-block;width:1.6em;text-align:center;opacity:0.75">${t.icon}</span>` +
-        `<span style="color:#9e9e9e">${escHtml(t.weatherDesc)}</span>&ensp;` +
-        `<span style="color:#9e9e9e">${t.tempMax}°C</span><span style="color:#666">/</span><span style="color:#9e9e9e">${t.tempMin}°C</span>&ensp;` +
+        `<span style="display:inline-block;width:1.6em;text-align:center">${t.icon}</span>` +
+        `<span style="color:${wmoDescColor(t.code)}">${escHtml(t.weatherDesc)}</span>&ensp;` +
+        `<span style="color:${tempColor(t.tempMax, t.code)}">${t.tempMax}°C</span><span style="color:#666">/</span><span style="color:${tempColor(t.tempMin, t.code)}">${t.tempMin}°C</span>&ensp;` +
         `<span style="color:${precipColor(t.precipProb)}">${t.precipProb}%</span>` +
       `</span>`;
   }
