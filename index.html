@@ -418,6 +418,15 @@
     }
     #help-title { font-size: 1rem; font-weight: 700; color: #e0e0e0; }
     #help-close { font-size: 0.78rem; color: #26C6DA; white-space: nowrap; }
+    /* 時刻表が古いときだけ出す1行。メイン画面には出さない */
+    #help-stale {
+      display: none;
+      font-size: 0.72rem;
+      color: #FF6D01;
+      line-height: 1.5;
+      padding: 7px 0 0;
+    }
+    #help-stale.on { display: block; }
     /* 大見出し。前の説明との境目に太めの横線 */
     .help-h {
       font-size: 1rem;
@@ -563,6 +572,7 @@
       <span id="help-title">TrainNow 1.02 の見かた</span>
       <span id="help-close">タップで閉じる ✕</span>
     </div>
+    <div id="help-stale"></div>
     <div class="help-h">1. アプリ全体の見かた</div>
     <div class="help-sub">画面の並び（上から）</div>
     <div class="help-list" style="--kw:6.7em">
@@ -629,11 +639,11 @@
     <div class="help-list" style="--kw:6.7em">
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#26C6DA">■</span>未取得</span><span class="help-val">まだ取得していない</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#FBBC04">■</span>更新中</span><span class="help-val">取得中</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#EA4335">■</span>NG</span><span class="help-val">取得失敗。↺ で手動再取得</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#EA4335">■</span>NG</span><span class="help-val">運行情報を取得できなかった。全路線が灰色の <span style="color:#5f6368">-</span> になる。↺ で手動再取得</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#CE93D8">■</span>日付</span><span class="help-val">当日の日付</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#26C6DA">■</span>電池</span><span class="help-val">端末のバッテリー残量（対応ブラウザのみ）</span></div>
     </div>
-    <div class="help-note">自動更新は 5 分間隔。裏に回っている間は取得せず、復帰時に古ければまとめて取り直す。</div>
+    <div class="help-note">自動更新は 5 分間隔。裏に回っている間は取得せず、復帰時に古ければまとめて取り直す。<br>圏外・オフラインでも時計・カウントダウン・追跡パネルは内蔵データで動く。天気は取れた地点だけ表示し、運行情報が取れないときは「平常」とは出さず <span style="color:#EA4335">NG</span> ＋ 灰色の <span style="color:#5f6368">-</span> になる。</div>
     <div class="help-sub">モードセレクト / 任意時刻</div>
     <div class="help-list" style="--kw:5.7em">
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>天気</span><span class="help-val">天気パネルのみ。追跡パネルは隠れる</span></div>
@@ -682,6 +692,7 @@
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#B0873B">■</span>GPS ON (手)</span><span class="help-val">駅を手で選び、GPS の自動追随を外した状態</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#FFB74D">■</span>GPS 測位中…</span><span class="help-val">位置情報を取得している最中</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#8d5a5a">■</span>GPS 不可</span><span class="help-val">位置情報の取得に失敗（権限オフ / 圏外など）</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#CE93D8">■</span>方向（選択中）</span><span class="help-val">△行き / ▼帰り の選択</span></div>
     </div>
     <div class="help-sub">ランク行右端の GPS 表示</div>
     <div class="help-list" style="--kw:9.4em">
@@ -689,9 +700,14 @@
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#B0873B">■</span>南町田 400m/精度難</span><span class="help-val">位置精度が 500m より悪く、徒歩時間を出せない</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#8d5a5a">■</span>GPS取得不可</span><span class="help-val">位置情報の取得に失敗</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>（表示なし）</span><span class="help-val">追跡 OFF、GPS OFF、測位中のいずれか</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#CE93D8">■</span>方向（選択中）</span><span class="help-val">上り / 下りなどの選択</span></div>
     </div>
     <div class="help-note">追跡パネルは内蔵の時刻表データを使うため、遅延そのものは反映されない。遅れの有無は行末の <span style="color:#EA4335;font-weight:700">!</span> と路線ランクで判断する。</div>
+    <div class="help-sub">時刻表データの取得日</div>
+    <div class="help-list" style="--kw:6.7em">
+    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#26C6DA">■</span>ルート1</span><span class="help-val"><span id="help-tt-r1">-</span></span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#9CCC65">■</span>ルート2</span><span class="help-val"><span id="help-tt-r2">-</span></span></div>
+    </div>
+    <div class="help-note">取得から 90 日以上たつとこの説明画面の上部に警告が出る。メイン画面には出さない。ダイヤ改正後は tw_build/build.py を実行して時刻表を取り直す。</div>
     <div class="help-foot" onclick="closeHelp()">タップで閉じる ✕</div>
   </div>
 </div>
@@ -990,8 +1006,9 @@ async function fetchOfficialStatus() {
 
     return result;
   } catch(e) {
+    // {} は「取得できたが異常なし」。取得自体の失敗は null で区別する
     console.warn('official status', e);
-    return {};
+    return null;
   }
 }
 
@@ -1170,12 +1187,14 @@ async function refresh() {
 }
 
 async function refreshInner() {
-  const official = await fetchOfficialStatus();
+  const official   = await fetchOfficialStatus();
+  const officialOk = official !== null;
+  const statusMap  = official || {};
 
   // 広域情報
   const skipKws     = ['横浜線','相鉄'];
   const priorityKws = ['東急田園都市','小田急'];
-  const allEntries  = Object.entries(official)
+  const allEntries  = Object.entries(statusMap)
     .filter(([n]) => !skipKws.some(k => n.includes(k)));
   const priorityLines = allEntries
     .filter(([n])    =>  priorityKws.some(k => n.includes(k)))
@@ -1189,14 +1208,16 @@ async function refreshInner() {
   const sortedEntries = [...priorityLines, ...middleLines, ...sonoOther];
   const count         = sortedEntries.length;
   let wideRows        = sortedEntries.map(([n,s]) => `【${n}】${s}`);
-  if (!wideRows.length) wideRows = ['現在、関東他路線に目立った遅延はありません'];
+  if (!officialOk)           wideRows = ['関東広域の運行情報を取得できませんでした'];
+  else if (!wideRows.length) wideRows = ['現在、関東他路線に目立った遅延はありません'];
 
   // 非広域路線を先に処理してランクを収集。詳細ページは並列取得（順序は TARGET_LINES 通り）
   const detailLines = TARGET_LINES.filter(line => line !== '広域');
   const details     = await Promise.all(detailLines.map(line => fetchLineDetail(line)));
   const lineItems   = detailLines.map((line, i) => {
     const rt     = details[i];
-    const stFull = officialStatusForLine(line, official);
+    // 運行情報そのものが取れていないときは「平常」と断定せず失敗扱いにする
+    const stFull = officialOk ? officialStatusForLine(line, statusMap) : '情報取得失敗';
     const ri     = calculateRank(rt.delayScore, rt.crowdScore, stFull, rt.delayMin, rt.hasStrong);
     return { line, rank:ri.rank, rankColor:ri.color, desc:ri.desc,
              delayScore:rt.delayScore, crowdScore:rt.crowdScore,
@@ -1217,22 +1238,25 @@ async function refreshInner() {
 
   // 広域アイテム
   let wRank, wColor;
-  if      (count === 0)  { wRank='-';  wColor='#34A853'; }
+  if      (!officialOk)  { wRank='-';  wColor='#5f6368'; }
+  else if (count === 0)  { wRank='-';  wColor='#34A853'; }
   else if (count <= 3)   { wRank='!';  wColor='#FBBC04'; }
   else if (count <= 8)   { wRank='!';  wColor='#FF6D01'; }
   else if (count <= 15)  { wRank='!!'; wColor='#EA4335'; }
   else                   { wRank='!!'; wColor='#9C27B0'; }
-  const wDesc = count > 0 ? `関東 遅延${count}路線` : '関東他路線 平常';
+  const wDesc = !officialOk ? '取得失敗'
+              : count > 0   ? `関東 遅延${count}路線`
+              : '関東他路線 平常';
 
   const items = [
     { line:'広域', rank:wRank, rankColor:wColor, desc:wDesc,
       delayScore:0, crowdScore:0, headlines:wideRows, isWide:true,
-      rankSummary, wideCount: count, hasUserDelayed },
+      rankSummary, wideCount: count, hasUserDelayed, officialOk },
     ...shownItems
   ];
 
   renderCards(items);
-  setFetchStatus(items.length === 0 ? 'NG' : 'OK', '#26C6DA');
+  setFetchStatus(officialOk ? 'OK' : 'NG', officialOk ? '#26C6DA' : '#EA4335');
 }
 
 function renderCards(items) {
@@ -1244,7 +1268,8 @@ function renderCards(items) {
 
     let html;
     if (st.isWide) {
-      const countLabel = st.wideCount > 0 ? `遅延 ${st.wideCount}路線` : '平常';
+      const countLabel = !st.officialOk ? '取得失敗'
+                       : st.wideCount > 0 ? `遅延 ${st.wideCount}路線` : '平常';
       html =
         `<div class="card-header">` +
         `<span class="line-name">${escHtml(st.line)}</span>` +
@@ -1291,7 +1316,9 @@ function renderCards(items) {
       // 関東広域に遅延がある時は件数を末尾に追加
       // - 小田急 or 田園都市 が遅延 → 「件数 + !!」
       // - それ以外（横浜線・相鉄・他社のみ遅延） → 件数だけ
-      if (st.wideCount > 0) {
+      if (!st.officialOk) {
+        parts.push(`<span style="color:${st.rankColor}">取得失敗</span>`);
+      } else if (st.wideCount > 0) {
         const tail = st.hasUserDelayed
           ? `${st.wideCount} ${escHtml(st.rank)}`
           : `${st.wideCount}`;
@@ -1353,23 +1380,33 @@ const MODE_LABEL_JP  = { weather: '天気', countdown: 'CD', both: 'ALL' };
 let displayMode      = 'weather';
 
 // 自動カウントダウンの定型スケジュール (HH:MM 順)
+// wdOnly: 出勤・退勤にあたるものは土日祝に出さない
 const COUNTDOWN_SCHEDULE = [
-  { time: '8:04',  desc: '秦野[小]' },
-  { time: '8:13',  desc: '秦野[小]' },
-  { time: '8:46',  desc: '相模大野[小]' },
-  { time: '8:52',  desc: '相模大野[小]' },
-  { time: '8:55',  desc: '中央林間[田]' },
-  { time: '9:01',  desc: '中央林間[田]' },
-  { time: '9:15',  desc: '出社' },
+  { time: '8:04',  desc: '秦野[小]',     wdOnly: true },
+  { time: '8:13',  desc: '秦野[小]',     wdOnly: true },
+  { time: '8:46',  desc: '相模大野[小]', wdOnly: true },
+  { time: '8:52',  desc: '相模大野[小]', wdOnly: true },
+  { time: '8:55',  desc: '中央林間[田]', wdOnly: true },
+  { time: '9:01',  desc: '中央林間[田]', wdOnly: true },
+  { time: '9:15',  desc: '出社',         wdOnly: true },
   { time: '12:00', desc: '昼食' },
   { time: '13:00', desc: '午後' },
-  { time: '18:15', desc: '終業' },
-  { time: '18:23', desc: '南町田[田]' },
-  { time: '18:26', desc: '南町田[田]' },
-  { time: '18:35', desc: '中央林間[小]' },
-  { time: '18:45', desc: '相模大野[小]' },
-  { time: '19:18', desc: '秦野[着]' },
+  { time: '18:15', desc: '終業',         wdOnly: true },
+  { time: '18:23', desc: '南町田[田]',   wdOnly: true },
+  { time: '18:26', desc: '南町田[田]',   wdOnly: true },
+  { time: '18:35', desc: '中央林間[小]', wdOnly: true },
+  { time: '18:45', desc: '相模大野[小]', wdOnly: true },
+  { time: '19:18', desc: '秦野[着]',     wdOnly: true },
 ];
+
+// 土日 or TT_HOLIDAYS の祝日か。カウントダウンとダイヤ種別で共用する
+function isHolidayDate(d) {
+  const pad = n => String(n).padStart(2, '0');
+  const key = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  if (typeof TT_HOLIDAYS !== 'undefined' && TT_HOLIDAYS.has(key)) return true;
+  const w = d.getDay();
+  return w === 0 || w === 6;
+}
 
 function makeTargetFromHHMM(timeStr, desc, fromDate) {
   const m = timeStr.match(/^(\d{1,2}):(\d{1,2})$/);
@@ -2225,7 +2262,44 @@ setInterval(() => { if (!document.hidden) autoFetch(); }, AUTO_REFRESH_MS);
 // ============================================================
 // 説明オーバーレイ
 // ============================================================
+const TT_STALE_DAYS = 90;
+
+// 'YYYY-MM-DD' から経過日数。読めなければ null
+function ttAgeDays(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+  if (!m) return null;
+  const d   = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const now = new Date();
+  const t0  = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.floor((t0 - d) / 86400000);
+}
+
+// 時刻表の取得日と古さ。警告は説明画面の上部だけに出す
+function renderHelpTimetable() {
+  const rows = [
+    ['help-tt-r1', TT_FETCHED],
+    ['help-tt-r2', TT_FETCHED_R2],
+  ];
+  let worst = null;
+  for (const [id, iso] of rows) {
+    const age = ttAgeDays(iso);
+    document.getElementById(id).textContent =
+      age === null ? `${iso}` : `${iso} 取得（${age}日前）`;
+    if (age !== null && (worst === null || age > worst)) worst = age;
+  }
+  const stale = document.getElementById('help-stale');
+  if (worst !== null && worst >= TT_STALE_DAYS) {
+    stale.textContent =
+      `⚠ 時刻表データが ${worst} 日前のものです。ダイヤ改正後は tw_build/build.py で取り直してください`;
+    stale.className = 'on';
+  } else {
+    stale.textContent = '';
+    stale.className = '';
+  }
+}
+
 function openHelp() {
+  renderHelpTimetable();
   document.getElementById('help-overlay').classList.add('on');
   document.body.style.overflow = 'hidden';
 }
