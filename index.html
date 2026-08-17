@@ -639,11 +639,17 @@
     <div class="help-list" style="--kw:6.7em">
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#26C6DA">■</span>未取得</span><span class="help-val">まだ取得していない</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#FBBC04">■</span>更新中</span><span class="help-val">取得中</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#EA4335">■</span>NG</span><span class="help-val">運行情報を取得できなかった。全路線が灰色の <span style="color:#5f6368">-</span> になる。↺ で手動再取得</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#26C6DA">■</span>OK 12:34</span><span class="help-val">取得成功。数字はその取得時刻</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#EA4335">■</span>NG 12:34</span><span class="help-val">運行情報を取得できなかった。数字は<b>最後に成功した</b>時刻。全路線が灰色の <span style="color:#5f6368">-</span> になる。↺ で手動再取得</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#CE93D8">■</span>日付</span><span class="help-val">当日の日付</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#26C6DA">■</span>電池</span><span class="help-val">端末のバッテリー残量（対応ブラウザのみ）</span></div>
     </div>
-    <div class="help-note">自動更新は 5 分間隔。裏に回っている間は取得せず、復帰時に古ければまとめて取り直す。<br>圏外・オフラインでも時計・カウントダウン・追跡パネルは内蔵データで動く。天気は取れた地点だけ表示し、運行情報が取れないときは「平常」とは出さず <span style="color:#EA4335">NG</span> ＋ 灰色の <span style="color:#5f6368">-</span> になる。</div>
+    <div class="help-sub">データの鮮度</div>
+    <div class="help-list" style="--kw:7.7em">
+    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#26C6DA">■</span>運行情報</span><span class="help-val"><span id="help-fresh-transit">-</span></span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#26C6DA">■</span>自動更新</span><span class="help-val">5 分間隔</span></div>
+    </div>
+    <div class="help-note">裏に回っている間は取得せず、復帰時に古ければまとめて取り直す。<br>圏外・オフラインでも時計・カウントダウン・追跡パネルは内蔵データで動く。天気は取れた地点だけ表示し、運行情報が取れないときは「平常」とは出さず <span style="color:#EA4335">NG</span> ＋ 灰色の <span style="color:#5f6368">-</span> になる。</div>
     <div class="help-sub">モードセレクト / 任意時刻</div>
     <div class="help-list" style="--kw:5.7em">
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>天気</span><span class="help-val">天気パネルのみ。追跡パネルは隠れる</span></div>
@@ -651,7 +657,7 @@
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>ALL</span><span class="help-val">天気とカウントダウンの両方。追跡パネルが出るのはこのモードだけ</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#26C6DA">■</span>任意時刻</span><span class="help-val">CD / ALL のときだけ表示。「14:30 打合せ」「1430 打合せ」形式。空欄で解除。ページを開いている間だけ保持</span></div>
     </div>
-    <div class="help-note">カウントダウンは最大 2 件。通勤・始業・終業などの定型スケジュールから自動で補充され、時刻を過ぎた 1 分後に消えて次が繰り上がる。</div>
+    <div class="help-note">カウントダウンは最大 2 件。通勤・始業・終業などの定型スケジュールから自動で補充され、時刻を過ぎた 1 分後に消えて次が繰り上がる。<br>土日祝は出勤・退勤にあたる枠（朝夕の電車・出社・終業）を出さない。昼食と午後は曜日にかかわらず出る。判定は翌日ぶんに繰り上がった枠も含め、その枠自身の日付で行う。</div>
     <div class="help-h">2. カウントダウンと電車追跡の色</div>
     <div class="help-sub">残り時間の色（カウントダウン・追跡パネル共通）</div>
     <div class="help-list" style="--kw:7.9em">
@@ -1158,6 +1164,18 @@ let isLoading = false;
 // 追跡パネルの遅延マーク用。refresh() が更新する
 let lineRankMap = {};
 
+// 最後に運行情報を取得できた時刻。NG のときも「いつのデータか」を出すために保持する
+let lastOkAt = null;
+
+function fmtClockHM(d) {
+  const pad = n => String(n).padStart(2, '0');
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function setFetchStatusNg() {
+  setFetchStatus(`NG ${lastOkAt ? fmtClockHM(lastOkAt) : '--:--'}`, '#EA4335');
+}
+
 function officialStatusForLine(lineName, official) {
   if (official[lineName]) return official[lineName];
   const kws = TARGET_LINE_KEYMAP[lineName];
@@ -1178,7 +1196,7 @@ async function refresh() {
     await refreshInner();
   } catch(e) {
     console.warn('refresh', e);
-    setFetchStatus('NG', '#EA4335');
+    setFetchStatusNg();
   } finally {
     // 途中で例外が出ても ↺ を復活させる
     isLoading = false;
@@ -1256,7 +1274,12 @@ async function refreshInner() {
   ];
 
   renderCards(items);
-  setFetchStatus(officialOk ? 'OK' : 'NG', officialOk ? '#26C6DA' : '#EA4335');
+  if (officialOk) {
+    lastOkAt = new Date();
+    setFetchStatus(`OK ${fmtClockHM(lastOkAt)}`, '#26C6DA');
+  } else {
+    setFetchStatusNg();
+  }
 }
 
 function renderCards(items) {
@@ -1424,9 +1447,13 @@ function refillFromSchedule() {
   const now = new Date();
   const keyOf = t => `${t.label}|${t.desc}`;
   const existing = new Set(countdownTargets.map(keyOf));
+  // 翌日ぶんに繰り上がった枠もあるので、判定は now ではなく各ターゲットの日付で行う
   const candidates = COUNTDOWN_SCHEDULE
-    .map(s => makeTargetFromHHMM(s.time, s.desc, now))
-    .filter(c => c && !existing.has(keyOf(c)))
+    .map(s => {
+      const t = makeTargetFromHHMM(s.time, s.desc, now);
+      return t ? Object.assign(t, { wdOnly: !!s.wdOnly }) : null;
+    })
+    .filter(c => c && !(c.wdOnly && isHolidayDate(c.time)) && !existing.has(keyOf(c)))
     .sort((a, b) => a.time - b.time);
   while (countdownTargets.length < COUNTDOWN_MAX && candidates.length > 0) {
     countdownTargets.push(candidates.shift());
@@ -1812,11 +1839,7 @@ function trackerNowMin(now) {
 function trackerDiaKind(now) {
   const d = new Date(now);
   if (d.getHours() < 2) d.setDate(d.getDate() - 1);
-  const pad = n => String(n).padStart(2, '0');
-  const key = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  if (typeof TT_HOLIDAYS !== 'undefined' && TT_HOLIDAYS.has(key)) return 'ho';
-  const w = d.getDay();
-  return (w === 0 || w === 6) ? 'ho' : 'wd';
+  return isHolidayDate(d) ? 'ho' : 'wd';
 }
 
 // 直前に出た1本＋次の9本
@@ -2274,6 +2297,16 @@ function ttAgeDays(iso) {
   return Math.floor((t0 - d) / 86400000);
 }
 
+// 運行情報を最後に取れた時刻と、そこからの経過
+function renderHelpFreshness() {
+  const el = document.getElementById('help-fresh-transit');
+  if (!lastOkAt) { el.textContent = 'まだ取得できていません'; return; }
+  const min = Math.floor((Date.now() - lastOkAt) / 60000);
+  const ago = min < 1 ? '1分未満' : min < 60 ? `${min}分前`
+            : `${Math.floor(min / 60)}時間${min % 60}分前`;
+  el.textContent = `最終成功 ${fmtClockHM(lastOkAt)}（${ago}）`;
+}
+
 // 時刻表の取得日と古さ。警告は説明画面の上部だけに出す
 function renderHelpTimetable() {
   const rows = [
@@ -2299,6 +2332,7 @@ function renderHelpTimetable() {
 }
 
 function openHelp() {
+  renderHelpFreshness();
   renderHelpTimetable();
   document.getElementById('help-overlay').classList.add('on');
   document.body.style.overflow = 'hidden';
