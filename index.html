@@ -409,20 +409,27 @@
     }
     #help-title { font-size: 1rem; font-weight: 700; color: #e0e0e0; }
     #help-close { font-size: 0.78rem; color: #26C6DA; white-space: nowrap; }
+    /* 大見出し。前の説明との境目に太めの横線 */
     .help-h {
       font-size: 1rem;
       font-weight: 700;
       color: #CE93D8;
       border-left: 3px solid #AB47BC;
-      padding-left: 8px;
-      margin: 18px 0 6px;
+      border-top: 2px solid #3a3a3a;
+      padding: 16px 0 0 8px;
+      margin: 20px 0 6px;
     }
+    #help-head + .help-h { border-top: none; padding-top: 4px; margin-top: 10px; }
+    /* 説明ブロックごとの区切り線 */
     .help-sub {
       font-size: 0.9rem;
       font-weight: 700;
       color: #e0e0e0;
-      margin: 12px 0 3px;
+      border-top: 1px solid #2a2a2a;
+      padding-top: 12px;
+      margin: 14px 0 4px;
     }
+    .help-h + .help-sub { border-top: none; padding-top: 0; margin-top: 8px; }
     .help-list { --kw: 6.2em; margin-bottom: 2px; }
     .help-li {
       display: flex;
@@ -443,11 +450,16 @@
       line-height: 1.75;
       margin: 3px 0 0;
     }
+    /* 下部の閉じるエリア。ヘッダーと同じくここをタップで閉じる */
     .help-foot {
-      font-size: 0.78rem;
-      color: #555;
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: #26C6DA;
       text-align: center;
+      border-top: 1px solid #2a2a2a;
       margin-top: 24px;
+      padding: 18px 0 10px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -462,8 +474,8 @@
 <div class="divider-purple"></div>
 
 <div id="countdown-panel" style="display:none;padding:2px 16px 2px;font-family:'Nunito','Arial Rounded MT Bold','Hiragino Maru Gothic ProN',sans-serif">
-  <div id="countdown-main" style="font-size:clamp(1.55rem, 5.6vw, 2.15rem);font-weight:900;color:#FBBC04;line-height:1.15;letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
-  <div id="countdown-sub"  style="font-size:clamp(1.3rem, 4.6vw, 1.75rem);font-weight:700;color:#888;margin-top:2px;letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+  <div id="countdown-main" style="font-size:clamp(1.4rem, 5.05vw, 1.95rem);font-weight:900;color:#FBBC04;line-height:1.15;letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+  <div id="countdown-sub"  style="font-size:clamp(1.18rem, 4.15vw, 1.58rem);font-weight:700;color:#888;margin-top:2px;letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
 </div>
 
 <div id="status-bar">
@@ -521,9 +533,9 @@
   </div>
 </div>
 
-<div id="help-overlay" onclick="closeHelp()">
+<div id="help-overlay">
   <div id="help-inner">
-    <div id="help-head">
+    <div id="help-head" onclick="closeHelp()">
       <span id="help-title">TrainNow 1.02 の見かた</span>
       <span id="help-close">タップで閉じる ✕</span>
     </div>
@@ -633,7 +645,7 @@
     <div class="help-li"><span class="help-key" style="color:#CE93D8">方向（選択中）</span><span class="help-val">上り / 下りなどの選択</span></div>
     </div>
     <div class="help-note">追跡パネルは内蔵の時刻表データを使うため、遅延そのものは反映されない。遅れの有無は行末の <span style="color:#EA4335;font-weight:700">!</span> と路線ランクで判断する。</div>
-    <div class="help-foot">画面のどこでもタップで閉じる</div>
+    <div class="help-foot" onclick="closeHelp()">タップで閉じる ✕</div>
   </div>
 </div>
 
