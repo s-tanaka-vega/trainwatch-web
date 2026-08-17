@@ -86,6 +86,7 @@
     #rank-summary-bar {
       display: flex;
       align-items: center;
+      flex-wrap: wrap;   /* GPS 徒歩情報が入り切らない端末だけ折り返す */
       gap: 10px;
       padding: 1px 16px 2px;
     }
@@ -94,6 +95,14 @@
       font-size: 1rem;
       font-weight: 700;
       letter-spacing: 0.04em;
+    }
+    /* GPS の徒歩情報。専用行を作らずランク行の右端に載せる */
+    #gps-info-inline {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: #FFB74D;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     #umbrella-row {
       font-size: 1.2rem;
@@ -458,6 +467,13 @@
       font-size: 0.86em;
       margin-right: 4px;
     }
+    /* 絵文字を置く枠。色は絵文字そのものが持つ */
+    .help-chip.em {
+      width: 1.6em;
+      font-size: 1em;
+      text-align: center;
+      font-variant-emoji: emoji;
+    }
     .help-val { flex: 1; min-width: 0; color: #9e9e9e; }
     .help-note {
       font-size: 0.76rem;
@@ -509,6 +525,7 @@
 <div id="rank-summary-bar">
   <span id="fetch-status">未取得</span>
   <span id="rank-summary-row"></span>
+  <span id="gps-info-inline"></span>
 </div>
 
 <div id="weather-links">
@@ -560,7 +577,7 @@
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>時計</span><span class="help-val">現在時刻。1秒ごとに更新</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>傘アラート</span><span class="help-val">今日 / 明日 の傘の要否</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>天気</span><span class="help-val">秦野 / 南町田 の今日と明日</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>ランク行</span><span class="help-val">左が取得ステータス、右が路線ランクの並び</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>ランク行</span><span class="help-val">左が取得ステータス、中央が路線ランクの並び、右端が GPS の徒歩情報</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>リンク</span><span class="help-val">秦野天気 / 関東広域電車情報 / モードセレクト</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>追跡パネル</span><span class="help-val">時刻表ベースの発車一覧（CD・ALL モードで表示）</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>路線カード</span><span class="help-val">路線ごとの詳細とヘッドライン</span></div>
@@ -576,12 +593,27 @@
     <div class="help-note">秦野・南町田の高い方を採用。今日も明日と同じく「24時間の最大降水確率」で判定するため、今この瞬間が晴れでも傘マークが出ることがある。</div>
     <div class="help-sub">天気の色</div>
     <div class="help-list" style="--kw:6.1em">
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>天気文言</span><span class="help-val">色は付けない。天候はアイコンで判断する</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>天気文言</span><span class="help-val">色は付けない。種類は次の11パターン（下の一覧）</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>気温（今日）</span><span class="help-val"><span style="color:#880E4F">38℃〜</span> <span style="color:#C62828">33〜</span> <span style="color:#FF5722">28〜</span> <span style="color:#FF8A65">22〜</span> <span style="color:#FFD54F">16〜</span> <span style="color:#A5D6A7">10〜</span> <span style="color:#90CAF9">4〜</span> <span style="color:#42A5F5">4℃未満</span></span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>降水確率</span><span class="help-val"><span style="color:#4FC3F7">70%〜</span> / <span style="color:#90CAF9">40%〜</span> / <span style="color:#e0e0e0">40%未満</span>。今日・明日とも色を付ける</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:transparent">■</span>地点名</span><span class="help-val"><span style="color:#FF8C00">秦野</span> / <span style="color:#CE93D8">南町田</span>。明日の行は薄字</span></div>
     </div>
     <div class="help-note">明日の行は参考情報なので、降水確率だけ色を残して他は無彩色にしてある。天気の色が付いているのは「今日の気温」と「今日・明日の降水確率」だけ。</div>
+    <div class="help-sub">天気文言の種類（全11パターン）</div>
+    <div class="help-list" style="--kw:9.2em">
+    <div class="help-li"><span class="help-key"><span class="help-chip em">☀️</span>快晴</span><span class="help-val">雲がほぼない</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip em">🌤️</span>晴れ</span><span class="help-val">おおむね晴れ</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip em">⛅️</span>晴れ/くもり</span><span class="help-val">晴れとくもりが半々</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip em">☁️</span>くもり</span><span class="help-val">曇天</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip em">🌫️</span>霧</span><span class="help-val">霧・着氷性の霧</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip em">🌦️</span>霧雨</span><span class="help-val">弱い雨。傘なしでも歩ける程度</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip em">🌧️</span>雨</span><span class="help-val">通常の雨。傘必須の判定対象</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip em">🌨️</span>雪</span><span class="help-val">雪・みぞれ</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip em">🌧️</span>にわか雨</span><span class="help-val">通り雨。アイコンは「雨」と同じ</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip em">⛈️</span>雷雨</span><span class="help-val">雷を伴う雨。傘必須の判定対象</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip em">🌡️</span>（文言なし）</span><span class="help-val">上記以外。アイコンだけ出て文字は空になる</span></div>
+    </div>
+    <div class="help-note">気象データは Open-Meteo の WMO 天気コードから変換している。「雨」と「にわか雨」はアイコンが同じなので、文言側で見分ける。</div>
     <div class="help-sub">路線ランク A〜E</div>
     <div class="help-list" style="--kw:4.9em">
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#34A853">■</span>A</span><span class="help-val">平常。異常なし</span></div>
@@ -654,7 +686,7 @@
     <div class="help-list" style="--kw:8.7em">
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#26C6DA">■</span>追跡 ON</span><span class="help-val">ルート1（通常の通勤ルート）。シアン</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#9CCC65">■</span>追跡 ON (r2)</span><span class="help-val">ルート2（別ルート）。ランクの平常色と混同しないよう別色</span></div>
-    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#FFB74D">■</span>GPS ON</span><span class="help-val">位置情報で最寄り駅を自動選択中</span></div>
+    <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#FFB74D">■</span>GPS ON</span><span class="help-val">位置情報で最寄り駅を自動選択中。ランク行の右端に「南町田 7分/400m」の形で徒歩時間と距離が出る</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#B0873B">■</span>GPS ON (手)</span><span class="help-val">駅を手で選び、GPS の自動追随を外した状態</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#FFB74D">■</span>GPS 測位中…</span><span class="help-val">位置情報を取得している最中</span></div>
     <div class="help-li"><span class="help-key"><span class="help-chip" style="color:#8d5a5a">■</span>GPS 不可</span><span class="help-val">位置情報の取得に失敗（権限オフ / 圏外など）</span></div>
@@ -2089,13 +2121,17 @@ function renderGpsControls() {
     gpsState === 'manual' ? 'manual' :
     gpsState === 'err'    ? 'err'    : '';
 
-  const info = document.getElementById('gps-info');
-  const b    = gpsFindBoard(trackerBoardId);
-  if (trackerOn && gpsActive() && gpsDistM !== null && b) {
+  const info   = document.getElementById('gps-info');
+  const inline = document.getElementById('gps-info-inline');
+  const b      = gpsFindBoard(trackerBoardId);
+  const show   = trackerOn && gpsActive() && gpsDistM !== null && b;
+  // 徒歩分が出るときはランク行に短縮表示。精度不足時だけ長文を専用行に出す
+  inline.textContent = (show && gpsWalkMin !== null)
+    ? `${b.station} ${gpsWalkMin}分/${gpsFmtDist(gpsDistM)}`
+    : '';
+  if (show && gpsWalkMin === null) {
     info.className   = 'on';
-    info.textContent = gpsWalkMin !== null
-      ? `${b.station}まで 徒歩 約${gpsWalkMin}分（${gpsFmtDist(gpsDistM)}）`
-      : `${b.station}まで ${gpsFmtDist(gpsDistM)}（位置精度が低いため徒歩時間は非表示）`;
+    info.textContent = `${b.station}まで ${gpsFmtDist(gpsDistM)}（位置精度が低いため徒歩時間は非表示）`;
   } else {
     info.className   = '';
     info.textContent = '';
